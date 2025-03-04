@@ -1,0 +1,20 @@
+runtime: nodejs20
+env: standard
+
+handlers:
+- url: /css
+  static_dir: public/css
+
+- url: /js
+  static_dir: public/js
+
+- url: /images
+  static_dir: public/images
+
+- url: /.*
+  script: auto
+
+env_variables:
+  GOOGLE_PLACES_API_KEY: ""
+
+entrypoint: node app.js
