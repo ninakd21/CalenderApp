@@ -146,7 +146,13 @@ app.get("/", async (req, res) => {
 
         res.render("home", { title: "Dashboard", tasks, calendars, calendarEvents, profiles, workPlan, personalPlan });
     } catch (error) {
-        console.error("❌ Failed to fetch tasks, calendar events, or profiles:", error.response ? error.response.data : error.message);
+        console.error("❌ Failed to fetch data from Microsoft APIs.");
+        if (error.response) {
+            console.error("🔴 Error Response:", JSON.stringify(error.response.data, null, 2));
+        } else {
+            console.error("🔴 Error Message:", error.message);
+        }
+
         res.send("Failed to fetch tasks, calendar events, or profiles from Microsoft.");
     }
 });
