@@ -1,10 +1,53 @@
 const express = require("express");
 const axios = require("axios");
 const session = require("express-session");
+const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
+const client = new SecretManagerServiceClient();
+
+async function accessSecret(secretName) {
+    try {
+        const [version] = await client.accessSecretVersion({
+            name: `projects/newly-347716]/secrets/${secretName}/versions/latest`
+        });
+        return version.payload.data.toString();
+    } catch (error) {
+        console.error(`Error accessing secret ${secretName}:`, error);
+        return null;
+    }
+}
+async function loadSecrets() {
+    console.log("🔍 Fetching secrets from Google Secret Manager...");
+
+    process.env.CLIENT_ID = await accessSecret("CLIENT_ID");
+    process.env.CLIENT_SECRET = await accessSecret("CLIENT_SECRET");
+    process.env.TENANT_ID = await accessSecret("TENANT_ID");
+
+    console.log("✅ Secrets Loaded:");
+    console.log("CLIENT_ID:", process.env.CLIENT_ID ? process.env.CLIENT_ID : "❌ MISSING");
+    console.log("CLIENT_SECRET:", process.env.CLIENT_SECRET ? "✅ Set" : "❌ MISSING");
+    console.log("TENANT_ID:", process.env.TENANT_ID ? process.env.TENANT_ID : "❌ MISSING");
+
+    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.TENANT_ID) {
+        console.error("❌ ERROR: One or more secrets are missing. Exiting...");
+        process.exit(1);
+    }
+}
+
+
+// Load secrets, then start the app
+loadSecrets().then(() => {
+    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.TENANT_ID) {
+        console.error("❌ ERROR: One or more secrets are missing. Exiting...");
+        process.exit(1); // Stop the app if secrets are missing
+    }
+
+    app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+});
+
 
 // Configure session
 app.use(session({
@@ -18,15 +61,11 @@ app.set("view engine", "ejs");
 app.set("views", __dirname + "/views");
 app.use(express.static("public"));
 
-// Microsoft OAuth 2.0 Configuration
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const TENANT_ID = process.env.TENANT_ID;
-const REDIRECT_URI = "http://localhost:3000/auth/callback";
+const REDIRECT_URI = "https://newly-347716.wl.r.appspot.com/auth/callback";
 
 // Redirect to Microsoft login
 app.get("/login", (req, res) => {
-    const authUrl = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&response_mode=query&scope=Tasks.Read Group.Read.All Calendars.Read Calendars.Read.Shared offline_access`;
+    const authUrl = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?client_id=${process.env.CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&response_mode=query&scope=Tasks.Read Group.Read.All Calendars.Read Calendars.Read.Shared offline_access`;
     res.redirect(authUrl);
 });
 
@@ -34,9 +73,9 @@ app.get("/login", (req, res) => {
 app.get("/auth/callback", async (req, res) => {
     const code = req.query.code;
     try {
-        const tokenResponse = await axios.post(`https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`, new URLSearchParams({
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
+        const tokenResponse = await axios.post(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`, new URLSearchParams({
+            client_id: process.env.CLIENT_ID,
+            client_secret: process.env.CLIENT_SECRET,
             code,
             redirect_uri: REDIRECT_URI,
             grant_type: "authorization_code",
@@ -105,4 +144,4 @@ app.get("/", async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
