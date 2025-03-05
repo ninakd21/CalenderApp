@@ -11,7 +11,7 @@ const client = new SecretManagerServiceClient();
 async function accessSecret(secretName) {
     try {
         const [version] = await client.accessSecretVersion({
-            name: `projects/newly-347716]/secrets/${secretName}/versions/latest`
+            name: `projects/newly-347716/secrets/${secretName}/versions/latest`
         });
         return version.payload.data.toString();
     } catch (error) {
@@ -143,5 +143,3 @@ app.get("/", async (req, res) => {
         res.send("Failed to fetch tasks, calendar events, or profiles from Microsoft.");
     }
 });
-
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
