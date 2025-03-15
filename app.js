@@ -8,6 +8,14 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const client = new SecretManagerServiceClient();
 
+// Determine Redirect URI
+const isLocal = !process.env.GOOGLE_CLOUD_PROJECT; // Check if running locally
+const REDIRECT_URI = isLocal 
+    ? "http://localhost:8080/auth/callback"
+    : "https://newly-347716.wl.r.appspot.com/auth/callback";
+
+console.log(`🔄 Using Redirect URI: ${REDIRECT_URI}`);
+
 async function accessSecret(secretName) {
     try {
         const [version] = await client.accessSecretVersion({
@@ -23,14 +31,14 @@ async function accessSecret(secretName) {
 async function loadSecrets() {
     console.log("🔍 Fetching secrets from Google Secret Manager...");
 
-    process.env.CLIENT_ID = await accessSecret("CLIENT_ID");
-    process.env.CLIENT_SECRET = await accessSecret("CLIENT_SECRET");
-    process.env.TENANT_ID = await accessSecret("TENANT_ID");
+    process.env.CLIENT_ID = await accessSecret("CLIENT_ID") || process.env.CLIENT_ID;
+    process.env.CLIENT_SECRET = await accessSecret("CLIENT_SECRET") || process.env.CLIENT_SECRET;
+    process.env.TENANT_ID = await accessSecret("TENANT_ID") || process.env.TENANT_ID;
 
     console.log("✅ Secrets Loaded:");
-    console.log("CLIENT_ID:", process.env.CLIENT_ID ? process.env.CLIENT_ID : "❌ MISSING");
+    console.log("CLIENT_ID:", process.env.CLIENT_ID ? "✅ Set" : "❌ MISSING");
     console.log("CLIENT_SECRET:", process.env.CLIENT_SECRET ? "✅ Set" : "❌ MISSING");
-    console.log("TENANT_ID:", process.env.TENANT_ID ? process.env.TENANT_ID : "❌ MISSING");
+    console.log("TENANT_ID:", process.env.TENANT_ID ? "✅ Set" : "❌ MISSING");
 
     if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.TENANT_ID) {
         console.error("❌ ERROR: One or more secrets are missing. Exiting...");
@@ -54,8 +62,6 @@ app.use(session({
 app.set("view engine", "ejs");
 app.set("views", __dirname + "/views");
 app.use(express.static("public"));
-
-const REDIRECT_URI = "https://newly-347716.wl.r.appspot.com/auth/callback";
 
 // Redirect to Microsoft login
 app.get("/login", (req, res) => {

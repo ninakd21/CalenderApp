@@ -27,6 +27,13 @@
         <h1 class="display-3">19:24</h1>
         <h5 class="text-light">Monday, March 3</h5>
 
+        <!-- Refresh Button -->
+        <div class="text-center my-3">
+            <button class="btn btn-outline-light" onclick="refreshPage()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+
         <!-- Calendar & Plan Filter Buttons -->
         <div class="text-center my-3">
             <button class="btn btn-outline-light mx-2" onclick="filterContent('all')">All</button>
@@ -83,6 +90,10 @@
         function toggleWhiteboard() {
             const whiteboard = document.getElementById('whiteboard');
             whiteboard.style.display = whiteboard.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function refreshPage() {
+            location.reload();
         }
 
         function filterContent(type) {
