@@ -1,0 +1,28 @@
+<!-- views/partials/tasks.ejs -->
+<div class="card">
+  <h2><i class="bi bi-list-task"></i> Today's Tasks</h2>
+
+  <!-- Additional filter buttons for buckets -->
+  <div class="mb-3">
+    <button class="btn btn-outline-light" onclick="filterBucket('all')">All Buckets</button>
+    <button class="btn btn-outline-light" onclick="filterBucket('Up Next')">Up Next</button>
+    <button class="btn btn-outline-light" onclick="filterBucket('Doing')">Doing</button>
+    <button class="btn btn-outline-light" onclick="filterBucket('Done')">Done</button>
+    <!-- Add as many as your plan has, or dynamically generate -->
+  </div>
+
+  <ul class="list-unstyled">
+    <% tasks.forEach(task => { %>
+      <li class="task-section"
+          data-task-type="<%= task.planId === workPlan?.id ? 'work' : 'personal' %>"
+          data-bucket="<%= task.bucketName %>">
+        <i class="bi <%= task.status === 'completed'
+          ? 'bi-check-circle-fill text-success'
+          : 'bi-check-circle'
+        %>"></i> 
+        <%= task.title %> 
+        <small>(<%= task.bucketName %>)</small>
+      </li>
+    <% }) %>
+  </ul>
+</div>

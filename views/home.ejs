@@ -1,111 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"></script>
-    <style>
-        body { background-color: #121212; color: white; font-family: 'Arial', sans-serif; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
-        .card { background-color: #1E1E1E; border-radius: 12px; padding: 25px; box-shadow: 0px 4px 6px rgba(0,0,0,0.5); }
-        .card h2 { font-size: 1.3rem; margin-bottom: 10px; color: #FFFFFF; }
-        .card .bi { font-size: 1.2rem; cursor: pointer; }
-        .btn-toggle { background: transparent; border: none; color: white; float: right; }
-        .calendar-day { padding: 8px; text-align: center; border-radius: 6px; transition: background 0.3s; color: white;}
-        .calendar-day:hover { background-color: #333; cursor: pointer; }
-        .calendar-active { background-color: #007bff !important; color: white; border-radius: 6px; color: white; }
-        .list-unstyled li { padding: 5px 0; color: white; font-size: 1rem; }
-        .text-muted { opacity: 0.6; }
-        .card p {color: white;}
-        .whiteboard-container { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 10px; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); z-index: 1000; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= title %></title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+  <!-- Bootstrap Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.js"></script>
+
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .card {
+      background-color: #1E1E1E;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
+      text-align: left; /* So text aligns properly in tasks & schedule */
+    }
+    .card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      color: #FFFFFF;
+    }
+    .card p,
+    .card li {
+      color: white;
+    }
+    /* Whiteboard container */
+    .whiteboard-container {
+      display: none;
+      position: fixed;
+      top: 50%; 
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff; 
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0px 4px 6px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+  </style>
 </head>
 <body>
-    <div class="container py-4 text-center">
-        <h1 class="display-3">19:24</h1>
-        <h5 class="text-light">Monday, March 3</h5>
+  <!-- Time & Date (Mirror Layout) -->
+  <h1 class="display-3">19:24</h1>
+  <h5 class="text-light">Monday, March 3</h5>
 
-        <!-- Refresh Button -->
-        <div class="text-center my-3">
-            <button class="btn btn-outline-light" onclick="refreshPage()">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
-        </div>
+  <!-- Filter Buttons -->
+  <div class="my-3">
+    <button class="btn btn-outline-light" onclick="filterContent('all')">All</button>
+    <button class="btn btn-outline-light" onclick="filterContent('work')">Work</button>
+    <button class="btn btn-outline-light" onclick="filterContent('personal')">Personal</button>
+  </div>
 
-        <!-- Calendar & Plan Filter Buttons -->
-        <div class="text-center my-3">
-            <button class="btn btn-outline-light mx-2" onclick="filterContent('all')">All</button>
-            <button class="btn btn-outline-light mx-2" onclick="filterContent('work')">Work</button>
-            <button class="btn btn-outline-light mx-2" onclick="filterContent('personal')">Personal</button>
-        </div>
-        
-        <!-- Dashboard Sections -->
-        <div class="dashboard">
-            <div class="card">
-                <h2><i class="bi bi-list-task"></i> Today's Tasks</h2>
-                <ul class="list-unstyled">
-                    <% tasks.forEach(task => { %>
-                        <li class="task-section" data-task-type="<%= task.planId === workPlan?.id ? 'work' : 'personal' %>">
-                            <i class="bi <%= task.status === 'completed' ? 'bi-check-circle-fill text-success' : 'bi-check-circle' %>"></i> 
-                            <%= task.title %>
-                        </li>
-                    <% }) %>
-                </ul>
-            </div>
-            
-            <div class="card">
-                <h2><i class="bi bi-clock-history"></i> Schedule</h2>
-                <% Object.keys(calendarEvents).forEach(calendarId => { %>
-                    <div class="calendar-section" data-calendar-type="<%= calendarId %>">
-                        <% const calendar = calendars.find(c => c.id === calendarId); %>
-                        <% if (calendar) { %>
-                            <h3><%= calendar.displayName || calendar.name %></h3>
-                        <% } else { %>
-                            <h3>Work Calendar</h3> <!-- Default to "Work Calendar" if not found -->
-                        <% } %>                        
-                        <% calendarEvents[calendarId].forEach(event => { %>
-                            <p><strong><%= new Date(event.start.dateTime).toDateString() %></strong></p>
-                            <ul class="list-unstyled">
-                                <li><%= event.subject %></li>
-                            </ul>
-                        <% }) %>
-                    </div>
-                <% }) %>
-            </div>
-        </div>
+  <!-- Dashboard Sections -->
+  <div class="dashboard">
+    <!-- Tasks Partial -->
+    <%- include("partials/tasks", {
+          tasks: tasks,
+          workPlan: workPlan,
+          personalPlan: personalPlan
+        }) %>
+      
+    <!-- Schedule Partial -->
+    <%- include("partials/schedule", {
+          calendars: calendars,
+          calendarEvents: calendarEvents
+        }) %>
+  </div>
 
-        <!-- Whiteboard Button -->
-        <button onclick="toggleWhiteboard()" class="btn btn-warning mt-4">Open Whiteboard</button>
-        
-        <!-- Whiteboard Canvas -->
-        <div id="whiteboard" class="whiteboard-container">
-            <button onclick="toggleWhiteboard()" class="btn btn-danger mb-2">Close</button>
-            <canvas id="canvas" width="800" height="500" class="border"></canvas>
-        </div>
-    </div>
+  <!-- Whiteboard Partial -->
+  <%- include("partials/whiteboard") %>
 
-    <script>
-        function toggleWhiteboard() {
-            const whiteboard = document.getElementById('whiteboard');
-            whiteboard.style.display = whiteboard.style.display === 'none' ? 'block' : 'none';
+  <script>
+    // Show/hide Whiteboard
+    function toggleWhiteboard() {
+      const whiteboard = document.getElementById('whiteboard');
+      whiteboard.style.display = (whiteboard.style.display === 'none' || !whiteboard.style.display) 
+        ? 'block' : 'none';
+    }
+
+    // Filter tasks & schedule
+    function filterContent(type) {
+      // Hide or show tasks
+      document.querySelectorAll('.task-section').forEach(task => {
+        if (type === 'all' || task.dataset.taskType === type) {
+          task.style.display = 'list-item';
+        } else {
+          task.style.display = 'none';
         }
+      });
 
-        function refreshPage() {
-            location.reload();
+      // Hide or show calendar events
+      document.querySelectorAll('.calendar-section').forEach(calSection => {
+        if (type === 'all' || calSection.dataset.calendarType === type) {
+          calSection.style.display = 'block';
+        } else {
+          calSection.style.display = 'none';
         }
+      });
+    }
+  </script>
+  <script>
+    // Already have filterContent(type) for 'work'/'personal'.
+    // Now we add filterBucket(bucketName).
+    function filterBucket(bucketName) {
+      document.querySelectorAll(".task-section").forEach(task => {
+        if (bucketName === "all" || task.dataset.bucket === bucketName) {
+          task.style.display = "list-item";
+        } else {
+          task.style.display = "none";
+        }
+      });
+    }
+  </script>
+  
 
-        function filterContent(type) {
-            document.querySelectorAll('.calendar-section, .task-section').forEach(section => {
-                if (type === 'all' || section.dataset.calendarType === type || section.dataset.taskType === type) {
-                    section.style.display = 'block';
-                } else {
-                    section.style.display = 'none';
-                }
-            });
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Whiteboard logic in its own JS file (if you want) -->
+  <script src="/js/whiteboard.js"></script>
+  <!-- Additional scripts (tasks.js, schedule.js) if needed -->
+  <script src="/js/tasks.js"></script>
+  <script src="/js/schedule.js"></script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

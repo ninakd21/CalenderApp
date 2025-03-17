@@ -1,0 +1,20 @@
+<!-- views/layout.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= title %></title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a> | 
+            <a href="/tasks">Tasks</a> |
+            <a href="/schedule">Schedule</a>
+        </nav>
+    </header>
+
+    <main>
+        <%- body %> <!-- EJS content goes here -->
+    </main>
+</body>
+</html>

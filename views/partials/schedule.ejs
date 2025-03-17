@@ -1,0 +1,21 @@
+<!-- views/partials/schedule.ejs -->
+<div class="card">
+  <h2><i class="bi bi-clock-history"></i> Schedule</h2>
+  <% Object.keys(calendarEvents).forEach(calendarId => { %>
+    <div class="calendar-section" data-calendar-type="<%= calendarId %>">
+      <% const calendar = calendars.find(c => c.id === calendarId); %>
+      <% if (calendar) { %>
+        <h3><%= calendar.displayName || calendar.name %></h3>
+      <% } else { %>
+        <h3>Work Calendar</h3> <!-- fallback -->
+      <% } %>
+
+      <% calendarEvents[calendarId].forEach(event => { %>
+        <p>
+          <strong><%= new Date(event.start.dateTime).toDateString() %></strong><br/>
+          <span><%= event.subject %></span>
+        </p>
+      <% }) %>
+    </div>
+  <% }) %>
+</div>
