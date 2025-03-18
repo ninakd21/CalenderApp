@@ -2,26 +2,34 @@
 <div class="card">
   <h2><i class="bi bi-list-task"></i> Today's Tasks</h2>
 
-  <!-- Additional filter buttons for buckets -->
+  <!-- Additional filter buttons for buckets if needed -->
   <div class="mb-3">
-    <button class="btn btn-outline-light" onclick="filterBucket('all')">All Buckets</button>
-    <button class="btn btn-outline-light" onclick="filterBucket('Up Next')">Up Next</button>
-    <button class="btn btn-outline-light" onclick="filterBucket('Doing')">Doing</button>
-    <button class="btn btn-outline-light" onclick="filterBucket('Done')">Done</button>
-    <!-- Add as many as your plan has, or dynamically generate -->
+    <button class="btn btn-outline-light bucket-filter-button" data-bucket="all" onclick="filterContent('all', 'bucket')">All Buckets</button>
+    <button class="btn btn-outline-light bucket-filter-button" data-bucket="Up next" onclick="filterContent('Up next', 'bucket')">Up next</button>
+    <button class="btn btn-outline-light bucket-filter-button" data-bucket="Doing" onclick="filterContent('Doing', 'bucket')">Doing</button>
+    <button class="btn btn-outline-light bucket-filter-button" data-bucket="Done" onclick="filterContent('Done', 'bucket')">Done</button>
+    
   </div>
 
   <ul class="list-unstyled">
     <% tasks.forEach(task => { %>
-      <li class="task-section"
-          data-task-type="<%= task.planId === workPlan?.id ? 'work' : 'personal' %>"
+      <li class="task-section d-flex align-items-center mb-2"
+          style="gap: 8px;"
+          data-task-type="<%= task.dataTaskType %>"
           data-bucket="<%= task.bucketName %>">
+
+        <!-- Colored bullet associated with task type -->
+        <span class="bullet bullet-<%= task.dataTaskType %>"></span>
+
         <i class="bi <%= task.status === 'completed'
           ? 'bi-check-circle-fill text-success'
           : 'bi-check-circle'
         %>"></i> 
-        <%= task.title %> 
-        <small>(<%= task.bucketName %>)</small>
+
+        <span>
+          <%= task.title %> 
+          <small>(<%= task.bucketName %>)</small>
+        </span>
       </li>
     <% }) %>
   </ul>

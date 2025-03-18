@@ -1,21 +1,58 @@
-<!-- views/partials/schedule.ejs -->
-<div class="card">
-  <h2><i class="bi bi-clock-history"></i> Schedule</h2>
-  <% Object.keys(calendarEvents).forEach(calendarId => { %>
-    <div class="calendar-section" data-calendar-type="<%= calendarId %>">
-      <% const calendar = calendars.find(c => c.id === calendarId); %>
-      <% if (calendar) { %>
-        <h3><%= calendar.displayName || calendar.name %></h3>
-      <% } else { %>
-        <h3>Work Calendar</h3> <!-- fallback -->
-      <% } %>
-
-      <% calendarEvents[calendarId].forEach(event => { %>
-        <p>
-          <strong><%= new Date(event.start.dateTime).toDateString() %></strong><br/>
-          <span><%= event.subject %></span>
-        </p>
-      <% }) %>
+<div class="card schedule-card">
+  <div class="schedule-header">
+    <h2><i class="bi bi-clock-history"></i> Schedule</h2>
+    <div class="schedule-icons">
+      <i class="bi bi-arrow-clockwise"></i>
+      <i class="bi bi-arrows-fullscreen"></i>
     </div>
-  <% }) %>
+  </div>
+  <%
+    // Combine all events from all calendars
+    let combinedEvents = [];
+    calendars.forEach(cal => {
+      if (calendarEvents[cal.id]) {
+        calendarEvents[cal.id].forEach(event => {
+          event.calendarType = cal.dataCalendarType;
+          event.calendarName = cal.displayName;
+          combinedEvents.push(event);
+        });
+      }
+    });
+    // Sort events in chronological order based on start date/time
+    combinedEvents.sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime));
+
+    // Group events by day
+    let eventsByDay = {};
+    combinedEvents.forEach(event => {
+      let eventDate = new Date(event.start.dateTime);
+      let dayString = eventDate.toDateString();
+      if (!eventsByDay[dayString]) {
+        eventsByDay[dayString] = [];
+      }
+      eventsByDay[dayString].push(event);
+    });
+    // Sort days in chronological order
+    let sortedDays = Object.keys(eventsByDay).sort((a, b) => new Date(a) - new Date(b));
+  %>
+  <div class="schedule-event-list">
+    <% sortedDays.forEach(day => { %>
+      <div class="schedule-day-group" data-day="<%= day %>">
+        <div class="schedule-day">
+          <strong><%= day %></strong>
+        </div>
+        <% eventsByDay[day].forEach(event => { 
+             const eventDate = new Date(event.start.dateTime);
+             const timeString = eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        %>
+          <div class="schedule-event" data-calendar-type="<%= event.calendarType %>">
+            <div class="time"><%= timeString %></div>
+            <div class="event-info">
+              <span class="bullet bullet-<%= event.calendarType %>"></span>
+              <span class="event-title"><%= event.subject %></span>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% }); %>
+  </div>
 </div>

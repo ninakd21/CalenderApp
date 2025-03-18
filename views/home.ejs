@@ -10,50 +10,8 @@
   <!-- Bootstrap Icons -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.js"></script>
 
-  <style>
-    body {
-      background-color: #121212;
-      color: white;
-      font-family: 'Arial', sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    .dashboard {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    .card {
-      background-color: #1E1E1E;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
-      text-align: left; /* So text aligns properly in tasks & schedule */
-    }
-    .card h2 {
-      font-size: 1.3rem;
-      margin-bottom: 10px;
-      color: #FFFFFF;
-    }
-    .card p,
-    .card li {
-      color: white;
-    }
-    /* Whiteboard container */
-    .whiteboard-container {
-      display: none;
-      position: fixed;
-      top: 50%; 
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff; 
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0px 4px 6px rgba(0,0,0,0.3);
-      z-index: 1000;
-    }
-  </style>
+  <!-- Your custom styles -->
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <!-- Time & Date (Mirror Layout) -->
@@ -61,19 +19,21 @@
   <h5 class="text-light">Monday, March 3</h5>
 
   <!-- Filter Buttons -->
-  <div class="my-3">
-    <button class="btn btn-outline-light" onclick="filterContent('all')">All</button>
-    <button class="btn btn-outline-light" onclick="filterContent('work')">Work</button>
-    <button class="btn btn-outline-light" onclick="filterContent('personal')">Personal</button>
+  <div class="profile-switcher my-3">
+    <!-- Outline each button with the color of the plan type -->
+    <button class="filter-btn filter-work" onclick="filterContent('work')">Work</button>
+    <button class="filter-btn filter-school" onclick="filterContent('school')">School</button>
+    <button class="filter-btn filter-personal" onclick="filterContent('personal')">Personal</button>
+    <button class="filter-btn filter-all" onclick="filterContent('all')">All</button>
+    
   </div>
 
   <!-- Dashboard Sections -->
   <div class="dashboard">
     <!-- Tasks Partial -->
     <%- include("partials/tasks", {
-          tasks: tasks,
-          workPlan: workPlan,
-          personalPlan: personalPlan
+          tasks: tasks
+        
         }) %>
       
     <!-- Schedule Partial -->
@@ -82,59 +42,93 @@
           calendarEvents: calendarEvents
         }) %>
   </div>
-
-  <!-- Whiteboard Partial -->
-  <%- include("partials/whiteboard") %>
-
   <script>
-    // Show/hide Whiteboard
-    function toggleWhiteboard() {
-      const whiteboard = document.getElementById('whiteboard');
-      whiteboard.style.display = (whiteboard.style.display === 'none' || !whiteboard.style.display) 
-        ? 'block' : 'none';
-    }
-
-    // Filter tasks & schedule
-    function filterContent(type) {
-      // Hide or show tasks
+    // Hides elements by adding the 'hidden' class.
+    // (Ensure your CSS includes: .hidden { display: none !important; })
+  
+    function filterContent(filterValue, dimension = 'plan') {
+      // Filter tasks
       document.querySelectorAll('.task-section').forEach(task => {
-        if (type === 'all' || task.dataset.taskType === type) {
-          task.style.display = 'list-item';
-        } else {
-          task.style.display = 'none';
+        if (dimension === 'plan') {
+          const taskType = task.getAttribute('data-task-type');
+          if (filterValue === 'all' || taskType === filterValue) {
+            task.classList.remove('hidden');
+          } else {
+            task.classList.add('hidden');
+          }
+        } else if (dimension === 'bucket') {
+          const bucket = task.getAttribute('data-bucket');
+          if (filterValue === 'all' || bucket === filterValue) {
+            task.classList.remove('hidden');
+          } else {
+            task.classList.add('hidden');
+          }
         }
       });
-
-      // Hide or show calendar events
-      document.querySelectorAll('.calendar-section').forEach(calSection => {
-        if (type === 'all' || calSection.dataset.calendarType === type) {
-          calSection.style.display = 'block';
+  
+      // Filter schedule events by calendar type (always plan-based)
+      document.querySelectorAll('.schedule-event').forEach(eventElem => {
+        const calendarType = eventElem.getAttribute('data-calendar-type');
+        if (filterValue === 'all' || calendarType === filterValue) {
+          eventElem.classList.remove('hidden');
         } else {
-          calSection.style.display = 'none';
+          eventElem.classList.add('hidden');
+        }
+      });
+  
+      // Hide schedule day groups if none of their events are visible
+      document.querySelectorAll('.schedule-day-group').forEach(group => {
+        const events = group.querySelectorAll('.schedule-event');
+        let anyVisible = false;
+        events.forEach(eventElem => {
+          if (!eventElem.classList.contains('hidden')) {
+            anyVisible = true;
+          }
+        });
+        if (anyVisible) {
+          group.classList.remove('hidden');
+        } else {
+          group.classList.add('hidden');
+        }
+      });
+  
+      // After filtering, update bucket filter buttons based on visible tasks
+      updateBucketFilterButtons();
+    }
+  
+    // This function collects only visible tasks (without the hidden class)
+    // and then hides bucket filter buttons that do not have any visible tasks.
+    function updateBucketFilterButtons() {
+      const availableBuckets = new Set();
+      document.querySelectorAll('.task-section').forEach(task => {
+        if (!task.classList.contains('hidden')) {
+          const bucket = task.getAttribute('data-bucket');
+          availableBuckets.add(bucket);
+        }
+      });
+  
+      document.querySelectorAll('.bucket-filter-button').forEach(btn => {
+        const bucketFilterValue = btn.getAttribute('data-bucket');
+        // Always show the "all" button.
+        if (bucketFilterValue !== 'all' && !availableBuckets.has(bucketFilterValue)) {
+          btn.classList.add('hidden');
+        } else {
+          btn.classList.remove('hidden');
         }
       });
     }
-  </script>
-  <script>
-    // Already have filterContent(type) for 'work'/'personal'.
-    // Now we add filterBucket(bucketName).
-    function filterBucket(bucketName) {
-      document.querySelectorAll(".task-section").forEach(task => {
-        if (bucketName === "all" || task.dataset.bucket === bucketName) {
-          task.style.display = "list-item";
-        } else {
-          task.style.display = "none";
-        }
-      });
-    }
+  
+    // Optionally, call updateBucketFilterButtons on initial load.
+    document.addEventListener('DOMContentLoaded', updateBucketFilterButtons);
   </script>
   
+  
+  
 
-  <!-- Whiteboard logic in its own JS file (if you want) -->
-  <script src="/js/whiteboard.js"></script>
-  <!-- Additional scripts (tasks.js, schedule.js) if needed -->
-  <script src="/js/tasks.js"></script>
-  <script src="/js/schedule.js"></script>
+
+  <!-- <script src="/js/whiteboard.js"></script> -->
+  <!-- <script src="/js/tasks.js"></script> -->
+  <!-- <script src="/js/schedule.js"></script> -->
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
