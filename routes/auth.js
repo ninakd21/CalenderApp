@@ -9,8 +9,18 @@ const axios = require("axios");
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const TENANT_ID = process.env.TENANT_ID;
-// Fallback to local redirect if not set
-const REDIRECT_URI = process.env.REDIRECT_URI || "http://localhost:8080/auth/callback";
+
+// Determine environment: default to production if not set
+const ENVIRONMENT = process.env.ENVIRONMENT || 'production';
+const PORT = process.env.PORT || 8080;
+
+// Set BASE_URL: if ENVIRONMENT is 'local', use localhost; otherwise, use production URL.
+const BASE_URL = ENVIRONMENT === 'local'
+  ? `http://localhost:${PORT}`
+  : (process.env.BASE_URL || 'https://newly-347716.wl.r.appspot.com');
+
+// Use BASE_URL to set the redirect URI; allow override with REDIRECT_URI env variable
+const REDIRECT_URI = process.env.REDIRECT_URI || `${BASE_URL}/auth/callback`;
 
 // GET /auth/login
 router.get("/login", (req, res) => {

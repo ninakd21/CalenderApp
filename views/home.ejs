@@ -15,8 +15,8 @@
 </head>
 <body>
   <!-- Time & Date (Mirror Layout) -->
-  <h1 class="display-3">19:24</h1>
-  <h5 class="text-light">Monday, March 3</h5>
+  <h1 id="time-display" class="display-3"></h1>
+  <h5 id="date-display" class="text-light"></h5>
 
   <!-- Filter Buttons -->
   <div class="profile-switcher my-3">
@@ -25,7 +25,10 @@
     <button class="filter-btn filter-school" onclick="filterContent('school')">School</button>
     <button class="filter-btn filter-personal" onclick="filterContent('personal')">Personal</button>
     <button class="filter-btn filter-all" onclick="filterContent('all')">All</button>
-    
+      <!-- Refresh button with an icon -->
+  <button class="filter-btn filter-refresh" onclick="location.reload()">
+    <i class="bi bi-arrow-clockwise"></i> Refresh
+  </button>
   </div>
 
   <!-- Dashboard Sections -->
@@ -43,6 +46,30 @@
         }) %>
   </div>
   <script>
+    function updateTime() {
+      fetch('https://worldtimeapi.org/api/timezone/Etc/UTC')
+        .then(response => response.json())
+        .then(data => {
+          // Use the datetime field from the API response
+          const dt = new Date(data.datetime);
+          document.getElementById('time-display').innerText = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          document.getElementById('date-display').innerText = dt.toDateString();
+        })
+        .catch(error => {
+          console.error('Error fetching time from API, using local time:', error);
+          const dt = new Date();
+          document.getElementById('time-display').innerText = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          document.getElementById('date-display').innerText = dt.toDateString();
+        });
+    }
+    
+    // Call updateTime on load and then every minute
+    updateTime();
+    setInterval(updateTime, 60000);
+  </script>
+  <script>
+
+
     // Hides elements by adding the 'hidden' class.
     // (Ensure your CSS includes: .hidden { display: none !important; })
   

@@ -1,6 +1,3 @@
-/***************************************************
- * app.js
- ***************************************************/
 // 1) Load environment variables from .env
 require("dotenv").config();
 
@@ -12,6 +9,13 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+// Determine environment from .env variable; default to production
+const ENVIRONMENT = process.env.ENVIRONMENT || 'production';
+// Set BASE_URL: if local, use localhost; otherwise, use BASE_URL from env or default production URL.
+const BASE_URL = ENVIRONMENT === 'local'
+  ? `http://localhost:${PORT}`
+  : (process.env.BASE_URL || 'https://newly-347716.wl.r.appspot.com');
 
 app.use(session({
   secret: "secret-key",
@@ -29,7 +33,8 @@ app.use("/auth", authRoutes);
 
 app.get("/", async (req, res) => {
   if (!req.session.accessToken) {
-    return res.redirect("/auth/login");
+    // Redirect using the BASE_URL so that when deployed, it uses prod URL
+    return res.redirect(`${BASE_URL}/auth/login`);
   }
 
   try {
@@ -38,6 +43,7 @@ app.get("/", async (req, res) => {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
     });
     const tasks = tasksRes.data.value || [];
+
     // 2) Fetch plans
     const plansRes = await axios.get("https://graph.microsoft.com/v1.0/me/planner/plans", {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
@@ -74,7 +80,6 @@ app.get("/", async (req, res) => {
       }
     });
     
-
     // 3) For each plan, fetch buckets
     const bucketMap = {};
     for (const plan of plans) {
@@ -87,35 +92,30 @@ app.get("/", async (req, res) => {
       });
     }
 
-    // 4) Attach bucketName to each task
-    // Attach bucketName and dataTaskType to each task
+    // 4) Attach bucketName and dataTaskType to each task
     tasks.forEach(task => {
-      // Set bucketName as before
       if (bucketMap[task.bucketId]) {
         task.bucketName = bucketMap[task.bucketId].name;
       } else {
         task.bucketName = "UnknownBucket";
       }
-      // Find the matching plan from your plans array
       const matchingPlan = plans.find(plan => plan.id === task.planId);
-      // If a matching plan is found, use its dataPlanType; otherwise, default to "personal"
       task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "school";
     });
 
-
-    // 1) Get all calendars
+    // 5) Get all calendars
     const calRes = await axios.get("https://graph.microsoft.com/v1.0/me/calendars", {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
     });
     let rawCalendars = calRes.data.value || [];
     console.log("All Outlook Calendars from Graph:", JSON.stringify(rawCalendars, null, 2));
 
-    // 2) Filter to keep only the ones named "Calendar", "Personal", or "School"
+    // 6) Filter to keep only the ones named "Calendar", "Personal", or "School"
     let calendars = rawCalendars.filter(cal =>
       cal.name === "Calendar" || cal.name === "Personal" || cal.name === "School"
     );
 
-    // 3) Rename them and set dataCalendarType
+    // 7) Rename them and set dataCalendarType
     calendars = calendars.map(cal => {
       if (cal.name === "Calendar") {
         return {
@@ -129,9 +129,7 @@ app.get("/", async (req, res) => {
           displayName: "Personal Calendar",
           dataCalendarType: "personal"
         };
-
       } else {
-        // Must be "School"
         return {
           ...cal,
           displayName: "School Calendar",
@@ -140,8 +138,7 @@ app.get("/", async (req, res) => {
       }
     });
 
-
-    // 6) For each kept calendar, get events
+    // 8) For each kept calendar, get events
     const calendarEvents = {};
     for (let cal of calendars) {
       const eventsRes = await axios.get(`https://graph.microsoft.com/v1.0/me/calendars/${cal.id}/events`, {
@@ -150,7 +147,7 @@ app.get("/", async (req, res) => {
       calendarEvents[cal.id] = eventsRes.data.value || [];
     }
 
-    // 7) Render home.ejs
+    // 9) Render home.ejs
     res.render("home", {
       title: "Dashboard",
       tasks,
@@ -164,6 +161,7 @@ app.get("/", async (req, res) => {
   }
 });
 
+
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server running on ${BASE_URL}`);
 });
