@@ -28,47 +28,58 @@
   <div class="content">
     <!-- Plan Filter Buttons -->
     <div class="profile-switcher my-3">
-      <button class="filter-btn filter-all active" onclick="filterContent('all', 'plan', this)">All</button>
+      <button class="filter-btn filter-all active" data-plan="all"
+        onclick="filterContent('all', 'plan', this)">All</button>
 
 
-      <button class="filter-btn filter-work" onclick="filterContent('work', 'plan', this)">Work</button>
+      <button class="filter-btn filter-work" data-plan="work"
+        onclick="filterContent('work', 'plan', this)">Work</button>
 
-      <button class="filter-btn filter-school" onclick="filterContent('school', 'plan', this)">School</button>
+      <button class="filter-btn filter-school" data-plan="school"
+        onclick="filterContent('school', 'plan', this)">School</button>
 
-      <button class="filter-btn filter-personal" onclick="filterContent('personal', 'plan', this)">Personal</button>
+      <button class="filter-btn filter-personal" data-plan="personal"
+        onclick="filterContent('personal', 'plan', this)">Personal</button>
 
 
       <button class="filter-btn filter-refresh" onclick="location.reload()">
         <i class="bi bi-arrow-clockwise"></i> Refresh
       </button>
     </div>
+<!-- Dashboard Sections -->
+<div class="dashboard">
+  <!-- Tasks Partial -->
+  <%- include("partials/tasks", { tasks: tasks, planBuckets: planBuckets || {} }) %>
 
-    <!-- Dashboard Sections -->
-    <div class="dashboard">
-      <!-- Tasks Partial -->
-      <%- include("partials/tasks", { tasks: tasks, planBuckets: planBuckets || {} }) %>
+  <!-- Schedule Partial -->
+  <%- include("partials/schedule", { calendars: calendars, calendarEvents: calendarEvents }) %>
 
-        <!-- Schedule Partial -->
-        <%- include("partials/schedule", { calendars: calendars, calendarEvents: calendarEvents }) %>
-    </div>
+  <!-- Calendar Partial -->
+  <%- include("partials/calendar", { sortedDays: sortedDays, eventsByDay: eventsByDay }) %>
+
+  <!-- Goals Partial -->
+  <%- include("partials/goals") %>
+</div>
+
+
   </div>
 
   <script>
-document.addEventListener('DOMContentLoaded', function () {
-    console.log("🚀 Page Loaded: Setting Defaults...");
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log("🚀 Page Loaded: Setting Defaults...");
 
-    // Ensure Plan defaults to "All"
-    let defaultPlanButton = document.querySelector(".filter-btn.filter-all");
-    defaultPlanButton.classList.add("active");
+      // Ensure Plan defaults to "All"
+      let defaultPlanButton = document.querySelector(".filter-btn.filter-all");
+      defaultPlanButton.classList.add("active");
 
-    // Ensure Bucket defaults to "All"
-    let defaultBucketButton = document.querySelector(".bucket-filter-button[data-bucket='all']");
-    if (defaultBucketButton) {
+      // Ensure Bucket defaults to "All"
+      let defaultBucketButton = document.querySelector(".bucket-filter-button[data-bucket='all']");
+      if (defaultBucketButton) {
         defaultBucketButton.classList.add("active");
-    }
+      }
 
-    // Wait for DOM to be fully rendered, then apply filtering in the correct order
-    setTimeout(() => {
+      // Wait for DOM to be fully rendered, then apply filtering in the correct order
+      setTimeout(() => {
         let selectedPlan = "all";
         let selectedBucket = "all";
         updateBucketFilterButtons(selectedPlan);
@@ -76,16 +87,16 @@ document.addEventListener('DOMContentLoaded', function () {
         updateTaskVisibility(selectedPlan, selectedBucket);
 
         console.log(`✅ Defaults Set: Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
-    }, 100);
-});
-function filterContent(filterValue, dimension, btn) {
+      }, 100);
+    });
+    function filterContent(filterValue, dimension, btn) {
     let selectedPlan = document.querySelector('.filter-btn.active')?.getAttribute('data-plan') || 'all';
     let selectedBucket = document.querySelector('.bucket-filter-button.active')?.getAttribute('data-bucket') || 'all';
 
     if (dimension === 'plan') {
         console.log(`🎯 Plan Selected: ${filterValue}`);
 
-        // Reset Plan button selection
+        // Reset all Plan buttons and set the active one
         document.querySelectorAll('.filter-btn').forEach(button => button.classList.remove('active'));
         btn.classList.add('active');
         selectedPlan = filterValue;
@@ -101,10 +112,8 @@ function filterContent(filterValue, dimension, btn) {
         // Update everything in correct order
         updateBucketFilterButtons(selectedPlan);
         updateScheduleFilter(selectedPlan);
+        updateCalendarFilter(selectedPlan);
         updateTaskVisibility(selectedPlan, selectedBucket);
-
-        // Ensure only "All" has a unique color when selected
-        document.querySelector('.filter-btn.filter-all')?.classList.add('highlight-all');
     } 
     else if (dimension === 'bucket') {
         console.log(`🎯 Bucket Selected: ${filterValue}`);
@@ -112,11 +121,13 @@ function filterContent(filterValue, dimension, btn) {
         // Find the corresponding plan for the selected bucket
         let bucketPlanType = btn.getAttribute('data-plan-type');
 
-        // Reset all Plan buttons, but select the correct one for the bucket
-        document.querySelectorAll('.filter-btn').forEach(button => button.classList.remove('active'));
-        document.querySelector(`.filter-btn[data-plan="${bucketPlanType}"]`)?.classList.add('active');
-
-        selectedPlan = bucketPlanType;
+        // If "All" plans is selected, update Plan to match the selected Bucket
+        if (selectedPlan === 'all') {
+            console.log(`🔄 Updating Plan to ${bucketPlanType} since 'All' was selected.`);
+            document.querySelectorAll('.filter-btn').forEach(button => button.classList.remove('active'));
+            document.querySelector(`.filter-btn[data-plan="${bucketPlanType}"]`)?.classList.add('active');
+            selectedPlan = bucketPlanType;
+        }
 
         // Set the selected bucket
         document.querySelectorAll('.bucket-filter-button').forEach(button => button.classList.remove('active'));
@@ -124,149 +135,170 @@ function filterContent(filterValue, dimension, btn) {
 
         selectedBucket = filterValue;
 
-        console.log(`🔄 Updating Tasks and Schedule for Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
+        console.log(`🔄 Updating Tasks, Schedule, and Calendar for Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
 
         // Now update everything in correct order
         updateScheduleFilter(selectedPlan);
+        updateCalendarFilter(selectedPlan);
         updateTaskVisibility(selectedPlan, selectedBucket);
-
-        // Ensure "All" loses its highlight when a bucket is selected
-        document.querySelector('.filter-btn.filter-all')?.classList.remove('highlight-all');
     }
 
     console.log(`✅ After Selection: Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
 }
 
+    function updateBucketFilterButtons(selectedPlan) {
+      console.log(`🔄 Updating Buckets for Plan: ${selectedPlan}`);
+      const availableBuckets = new Map();
 
-
-function updateBucketFilterButtons(selectedPlan) {
-    console.log(`🔄 Updating Buckets for Plan: ${selectedPlan}`);
-    const availableBuckets = new Map();
-
-    // Identify buckets that contain visible tasks for the selected Plan
-    document.querySelectorAll('.task-section').forEach(task => {
+      // Identify buckets that contain visible tasks for the selected Plan
+      document.querySelectorAll('.task-section').forEach(task => {
         const bucket = task.getAttribute('data-bucket');
         const planType = task.getAttribute('data-task-type');
 
         if ((selectedPlan === 'all' || planType === selectedPlan) && bucket) {
-            if (!availableBuckets.has(bucket)) {
-                availableBuckets.set(bucket, 1);
-            } else {
-                availableBuckets.set(bucket, availableBuckets.get(bucket) + 1);
-            }
+          if (!availableBuckets.has(bucket)) {
+            availableBuckets.set(bucket, 1);
+          } else {
+            availableBuckets.set(bucket, availableBuckets.get(bucket) + 1);
+          }
         }
-    });
+      });
 
-    let anyVisibleBucket = false;
+      let anyVisibleBucket = false;
 
-    document.querySelectorAll('.bucket-filter-button').forEach(btn => {
+      document.querySelectorAll('.bucket-filter-button').forEach(btn => {
         const bucketFilterValue = btn.getAttribute('data-bucket');
         const bucketPlanType = btn.getAttribute('data-plan-type');
 
-        let shouldShow = bucketFilterValue === 'all' ||
-                         (availableBuckets.has(bucketFilterValue) && (selectedPlan === 'all' || bucketPlanType === selectedPlan));
+        // Only show buckets that belong to the selected Plan or "All"
+        let shouldShow = selectedPlan === 'all' || bucketPlanType === selectedPlan;
 
         if (shouldShow) {
-            btn.classList.remove('hidden');
-            btn.style.display = "inline-block"; // Ensure buttons are properly displayed
-            anyVisibleBucket = true;
+          btn.classList.remove('hidden');
+          btn.style.display = "inline-block"; // Ensure buttons are properly displayed
+          anyVisibleBucket = true;
         } else {
-            btn.classList.add('hidden');
-            btn.style.display = "none"; // Completely remove hidden buttons
+          btn.classList.add('hidden');
+          btn.style.display = "none"; // Completely remove hidden buttons
         }
-    });
+      });
 
-    // Ensure bucket switcher is visible only if there are available buckets
-    const bucketSwitcher = document.querySelector('.bucket-switcher');
-    bucketSwitcher.style.display = anyVisibleBucket ? 'flex' : 'none';
+      // Ensure bucket switcher is visible only if there are available buckets
+      const bucketSwitcher = document.querySelector('.bucket-switcher');
+      bucketSwitcher.style.display = anyVisibleBucket ? 'flex' : 'none';
 
-    console.log(`✅ Buckets Updated for Plan: ${selectedPlan}, Visible Buckets:`, Array.from(availableBuckets.keys()));
+      console.log(`✅ Buckets Updated for Plan: ${selectedPlan}, Visible Buckets:`, Array.from(availableBuckets.keys()));
+    }
 
-    // Ensure "All" is selected when switching Plans
-    document.querySelectorAll('.bucket-filter-button').forEach(btn => btn.classList.remove('active'));
-    document.querySelector('.bucket-filter-button[data-bucket="all"]')?.classList.add('active');
+    function updateTaskVisibility(selectedPlan, selectedBucket) {
+      console.log(`🔄 Updating Tasks: Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
 
-    console.log(`✅ "All" bucket is now active after plan selection.`);
-}
+      let anyVisibleTask = false;
 
-function updateTaskVisibility(selectedPlan, selectedBucket) {
-    console.log(`🔄 Updating Tasks: Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
-
-    let anyVisibleTask = false;
-
-    document.querySelectorAll('.task-section').forEach(task => {
+      document.querySelectorAll('.task-section').forEach(task => {
         let taskPlan = (task.getAttribute('data-task-type') || "").trim().toLowerCase();
         let taskBucket = (task.getAttribute('data-bucket') || "").trim().toLowerCase();
         let planMatch = selectedPlan.trim().toLowerCase();
         let bucketMatch = selectedBucket.trim().toLowerCase();
 
         if (!taskPlan || !taskBucket) {
-            console.warn(`⚠ Task missing attributes: ${task.innerText}`);
-            return;
+          console.warn(`⚠ Task missing attributes: ${task.innerText}`);
+          return;
         }
 
         console.log(`📝 Checking Task: ${task.innerText} | Plan: ${taskPlan} | Bucket: ${taskBucket}`);
 
-        // Fix: Ensure "All" buckets show all tasks instead of hiding them
+        // Ensure "All" buckets show all tasks instead of hiding them
         let showTask = (planMatch === "all" || taskPlan === planMatch) &&
-                       (bucketMatch === "all" || taskBucket === bucketMatch || selectedBucket === "all");
+          (bucketMatch === "all" || taskBucket === bucketMatch);
 
         if (showTask) {
-            console.log(`✅ Showing Task: ${task.innerText}`);
-            task.classList.remove('hidden');
-            task.style.display = "flex";  // Ensure visible tasks are displayed
-            anyVisibleTask = true;
+          console.log(`✅ Showing Task: ${task.innerText}`);
+          task.classList.remove('hidden');
+          task.style.display = "flex";  // Ensure visible tasks are displayed
+          anyVisibleTask = true;
         } else {
-            console.log(`❌ Hiding Task: ${task.innerText}`);
-            task.classList.add('hidden');
-            task.style.display = "none";  // Fully hide invalid tasks
+          console.log(`❌ Hiding Task: ${task.innerText}`);
+          task.classList.add('hidden');
+          task.style.display = "none";  // Fully hide invalid tasks
         }
-    });
+      });
 
-    let taskContainer = document.querySelector('.card');
-    if (taskContainer) {
-        taskContainer.style.display = anyVisibleTask ? 'block' : 'none';
-        console.log(`🛠 Task Container Visibility: ${taskContainer.style.display}`);
+      let taskContainer = document.querySelector('.card');
+      let emptyMessage = document.querySelector('#no-tasks-message');
+
+      if (!anyVisibleTask) {
+        // No tasks found, show "No tasks" message
+        if (!emptyMessage) {
+          emptyMessage = document.createElement('div');
+          emptyMessage.id = "no-tasks-message";
+          emptyMessage.innerText = "There are no tasks in this bucket.";
+          emptyMessage.style.textAlign = "center";
+          emptyMessage.style.padding = "10px";
+          emptyMessage.style.color = "#ccc";
+          taskContainer.appendChild(emptyMessage);
+        }
+        emptyMessage.style.display = "block";
+      } else {
+        // Tasks exist, hide the "No tasks" message
+        if (emptyMessage) {
+          emptyMessage.style.display = "none";
+        }
+      }
+
+      // Ensure the task container remains visible
+      taskContainer.style.display = "block";
+
+      console.log(`✅ Final Task Visibility: Plan = ${selectedPlan}, Bucket = ${selectedBucket}, Any Visible: ${anyVisibleTask}`);
     }
 
-    console.log(`✅ Final Task Visibility: Plan = ${selectedPlan}, Bucket = ${selectedBucket}, Any Visible: ${anyVisibleTask}`);
-}
 
 
+    function updateScheduleFilter(selectedPlan) {
+      console.log(`🔄 Updating Schedule for Plan: ${selectedPlan}`);
 
-function updateScheduleFilter(selectedPlan) {
-    console.log(`🔄 Updating Schedule for Plan: ${selectedPlan}`);
+      let anyVisibleEvent = false;
 
-    let anyVisibleEvent = false;
-
-    document.querySelectorAll('.schedule-event').forEach(eventElem => {
+      document.querySelectorAll('.schedule-event').forEach(eventElem => {
         const calendarType = eventElem.getAttribute('data-calendar-type');
         let shouldShow = selectedPlan === 'all' || calendarType === selectedPlan;
 
         if (shouldShow) {
-            eventElem.classList.remove('hidden');
-            eventElem.style.display = "flex"; // Ensure visible schedules are displayed
-            anyVisibleEvent = true;
+          eventElem.classList.remove('hidden');
+          eventElem.style.display = "flex"; // Ensure visible schedules are displayed
+          anyVisibleEvent = true;
         } else {
-            eventElem.classList.add('hidden');
-            eventElem.style.display = "none"; // Completely remove hidden schedules
+          eventElem.classList.add('hidden');
+          eventElem.style.display = "none"; // Completely remove hidden schedules
         }
-    });
+      });
 
-    document.querySelectorAll('.schedule-day-group').forEach(group => {
+      document.querySelectorAll('.schedule-day-group').forEach(group => {
         const events = group.querySelectorAll('.schedule-event:not(.hidden)');
         group.style.display = events.length > 0 ? 'block' : 'none';
-    });
+      });
 
-    // Ensure the schedule container is visible if events exist
-    let scheduleContainer = document.querySelector('.schedule-card');
-    if (scheduleContainer) {
+      // Ensure the schedule container is visible if events exist
+      let scheduleContainer = document.querySelector('.schedule-card');
+      if (scheduleContainer) {
         scheduleContainer.style.display = anyVisibleEvent ? 'block' : 'none';
+      }
+
+      console.log(`✅ Schedule Updated for Plan: ${selectedPlan}, Any Visible Events: ${anyVisibleEvent}`);
     }
 
-    console.log(`✅ Schedule Updated for Plan: ${selectedPlan}, Any Visible Events: ${anyVisibleEvent}`);
-}
+    function updateCalendarFilter(selectedPlan) {
+    console.log(`🔄 Filtering Calendar Events for Plan: ${selectedPlan}`);
 
+    document.querySelectorAll('.calendar-event').forEach(event => {
+        let eventPlanType = event.getAttribute('data-plan-type');
+
+        let shouldShow = selectedPlan === "all" || eventPlanType === selectedPlan;
+        event.classList.toggle('hidden', !shouldShow);
+    });
+
+    console.log(`✅ Calendar Events Updated for Plan: ${selectedPlan}`);
+}
 
 
   </script>

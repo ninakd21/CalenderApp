@@ -27,30 +27,37 @@ body {
   margin-top: 140px;
 }
 
-/* Dashboard Layout */
+/* Dashboard Layout: Ensure Schedule is in Top-Right */
 .dashboard {
-  display: flex;
-  flex-wrap: wrap;
-  height: calc(100vh - 160px);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 10px;
+  height: calc(100vh - 160px);
   padding: 10px;
   box-sizing: border-box;
 }
 
-/* Tasks & Schedule Sections (Equal 50/50 Size) */
+/* Card Styling (Tasks, Schedule, Calendar, Goals) */
 .dashboard .card {
-  flex: 1 1 48%;
-  min-height: 300px;
-  max-height: 80vh;
-  overflow: auto;
   display: flex;
   flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  padding: 20px;
+  min-height: 40vh;
+  max-height: 80vh;
   background-color: rgba(20, 20, 20, 0.7); /* Dark translucent */
   border-radius: 12px;
-  padding: 20px;
   box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
   text-align: left;
   border: 2px solid rgba(255, 255, 255, 0.2);
+  overflow: auto;
+}
+
+/* Ensure Cards Maintain Their Size */
+.dashboard .card {
+  min-width: 48%;
 }
 .card h2 {
   margin: 0;
@@ -237,4 +244,122 @@ body {
 /* Hide Empty Schedule Groups */
 .schedule-day-group.hidden {
   display: none;
+}
+/* Calendar Styling */
+.calendar-card {
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: rgba(20, 20, 20, 0.7); 
+    border-radius: 12px;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    padding: 10px;
+}
+
+.calendar-day {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    padding: 10px;
+    min-height: 80px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 1rem;
+    color: white;
+    font-weight: bold;
+}
+
+.calendar-day.empty {
+    background: none;
+    border: none;
+}
+
+/* Calendar Event Borders Based on Plan */
+.border-work {
+  border-left: 4px solid #FF6B6B !important; /* Red for Work */
+}
+.border-school {
+  border-left: 4px solid #FFE66D !important; /* Yellow for School */
+}
+.border-personal {
+  border-left: 4px solid #4ECDC4 !important; /* Teal for Personal */
+}
+.border-unknown {
+  border-left: 4px solid #888 !important; /* Gray for Unknown */
+}
+
+/* Calendar Events */
+.calendar-event {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 5px;
+  border-radius: 4px;
+  margin: 3px 0;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Hide Events That Are Not in the Selected Plan */
+.calendar-event.hidden {
+  display: none !important;
+}
+/* Goals Section */
+.goals-card {
+  padding: 20px;
+  background-color: rgba(20, 20, 20, 0.7); 
+  border-radius: 12px;
+  box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  min-height: 40vh;
+}
+
+.goal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.goal-item {
+  padding: 8px;
+  margin: 5px 0;
+  border-left: 4px solid white;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: white;
+}
+
+/* Goal Progress Bar */
+.goal-progress {
+  width: 100%;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-top: 5px;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #4ECDC4;
+  border-radius: 3px;
+}
+
+/* Goal Borders Based on Plan */
+.border-work {
+  border-left: 4px solid #FF6B6B !important; /* Red for Work */
+}
+.border-school {
+  border-left: 4px solid #FFE66D !important; /* Yellow for School */
+}
+.border-personal {
+  border-left: 4px solid #4ECDC4 !important; /* Teal for Personal */
 }

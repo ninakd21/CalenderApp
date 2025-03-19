@@ -30,10 +30,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // /auth routes for MS login
 app.use("/auth", authRoutes);
-
 app.get("/", async (req, res) => {
   if (!req.session.accessToken) {
-    // Redirect using the BASE_URL so that when deployed, it uses prod URL
     return res.redirect(`${BASE_URL}/auth/login`);
   }
 
@@ -49,40 +47,18 @@ app.get("/", async (req, res) => {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
     });
     let rawPlans = plansRes.data.value || [];
-    // console.log("All Plans from Graph", JSON.stringify(rawPlans, null, 2));
 
-    // Filter to keep only the ones with exactly the titles we want
     let plans = rawPlans.filter(plan =>
       plan.title === "Work Plan" || plan.title === "Personal Plan" || plan.title === "School Plan"
-    );
+    ).map(plan => ({
+      ...plan,
+      displayName: plan.title === "Work Plan" ? "Work Plan" : plan.title === "Personal Plan" ? "Personal Plan" : "School Plan",
+      dataPlanType: plan.title.toLowerCase().replace(" plan", "")
+    }));
 
-    // Map each plan to add displayName and dataPlanType
-    plans = plans.map(plan => {
-      if (plan.title === "Work Plan") {
-        return {
-          ...plan,
-          displayName: plan.title,
-          dataPlanType: "work"
-        };
-      } else if (plan.title === "Personal Plan") {
-        return {
-          ...plan,
-          displayName: "Personal Plan",
-          dataPlanType: "personal"
-        };
-      } else {
-        // Must be "School Plan"
-        return {
-          ...plan,
-          displayName: "School Plan",
-          dataPlanType: "school"
-        };
-      }
-    });
-
-    // 3) Fetch all available buckets per plan type
+    // 3) Fetch Buckets per Plan
     const bucketMap = {};
-    const planBuckets = {}; // Store buckets categorized by plan type
+    const planBuckets = {};
 
     for (const plan of plans) {
       const bucketsRes = await axios.get(`https://graph.microsoft.com/v1.0/planner/plans/${plan.id}/buckets`, {
@@ -90,8 +66,6 @@ app.get("/", async (req, res) => {
       });
 
       const buckets = bucketsRes.data.value || [];
-
-      // Store bucket information
       planBuckets[plan.dataPlanType] = planBuckets[plan.dataPlanType] || [];
       buckets.forEach(bucket => {
         bucketMap[bucket.id] = { name: bucket.name, planId: bucket.planId };
@@ -99,61 +73,46 @@ app.get("/", async (req, res) => {
       });
     }
 
-    console.log("Plan Buckets Data:", JSON.stringify(planBuckets, null, 2));
-
-    // 4) Now that we have `bucketMap`, update tasks with their bucket names
+    // 4) Assign Buckets to Tasks
     tasks.forEach(task => {
-      if (bucketMap[task.bucketId]) {
-        task.bucketName = bucketMap[task.bucketId].name;
-      } else {
-        task.bucketName = "Unknown Bucket"; // More readable fallback
-      }
-
-      // Ensure task has a valid plan type
+      task.bucketName = bucketMap[task.bucketId] ? bucketMap[task.bucketId].name : "Unknown Bucket";
       const matchingPlan = plans.find(plan => plan.id === task.planId);
       task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "unknown";
-
-      console.log(`Task: ${task.title}, Bucket: ${task.bucketName}, Type: ${task.dataTaskType}`);
     });
 
-
-
-    // 5) Get all calendars
+    // 5) Get Calendars
     const calRes = await axios.get("https://graph.microsoft.com/v1.0/me/calendars", {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
     });
     let rawCalendars = calRes.data.value || [];
-    // console.log("All Outlook Calendars from Graph:", JSON.stringify(rawCalendars, null, 2));
 
-    // 6) Filter to keep only the ones named "Calendar", "Personal", or "School"
     let calendars = rawCalendars.filter(cal =>
       cal.name === "Calendar" || cal.name === "Personal" || cal.name === "School"
     );
+ // 7) Rename them and set dataCalendarType
+ calendars = calendars.map(cal => {
+  if (cal.name === "Calendar") {
+    return {
+      ...cal,
+      displayName: "Work Calendar",
+      dataCalendarType: "work"
+    };
+  } else if (cal.name === "Personal") {
+    return {
+      ...cal,
+      displayName: "Personal Calendar",
+      dataCalendarType: "personal"
+    };
+  } else {
+    return {
+      ...cal,
+      displayName: "School Calendar",
+      dataCalendarType: "school"
+    };
+  }
+});
 
-    // 7) Rename them and set dataCalendarType
-    calendars = calendars.map(cal => {
-      if (cal.name === "Calendar") {
-        return {
-          ...cal,
-          displayName: "Work Calendar",
-          dataCalendarType: "work"
-        };
-      } else if (cal.name === "Personal") {
-        return {
-          ...cal,
-          displayName: "Personal Calendar",
-          dataCalendarType: "personal"
-        };
-      } else {
-        return {
-          ...cal,
-          displayName: "School Calendar",
-          dataCalendarType: "school"
-        };
-      }
-    });
-
-    // 8) For each kept calendar, get events
+    // 6) Fetch Events Per Calendar
     const calendarEvents = {};
     for (let cal of calendars) {
       const eventsRes = await axios.get(`https://graph.microsoft.com/v1.0/me/calendars/${cal.id}/events`, {
@@ -161,6 +120,78 @@ app.get("/", async (req, res) => {
       });
       calendarEvents[cal.id] = eventsRes.data.value || [];
     }
+// 7) Fetch Goals from Planner (Grouped by Priority in Each Bucket)
+const goals = [];
+for (const plan of plans) {
+    const bucketsRes = await axios.get(`https://graph.microsoft.com/v1.0/planner/plans/${plan.id}/buckets`, {
+        headers: { Authorization: `Bearer ${req.session.accessToken}` }
+    });
+
+    const buckets = bucketsRes.data.value || [];
+
+    for (const bucket of buckets) {
+        // Fetch tasks under each bucket
+        const bucketTasksRes = await axios.get(`https://graph.microsoft.com/v1.0/planner/buckets/${bucket.id}/tasks`, {
+            headers: { Authorization: `Bearer ${req.session.accessToken}` }
+        });
+
+        const bucketTasks = bucketTasksRes.data.value || [];
+
+        // Filter tasks that have a priority set
+        const priorityTasks = bucketTasks.filter(task => task.priority !== null);
+
+        if (priorityTasks.length > 0) {
+            let completedTasks = priorityTasks.filter(task => task.percentComplete === 100).length;
+            let totalTasks = priorityTasks.length;
+
+            goals.push({
+                title: bucket.name, // The bucket name represents the goal
+                planType: plan.dataPlanType, // Work, School, Personal
+                totalTasks: totalTasks,
+                completedTasks: completedTasks,
+                progress: (completedTasks / totalTasks) * 100,
+                tasks: priorityTasks.map(task => ({
+                    title: task.title,
+                    completed: task.percentComplete === 100
+                }))
+            });
+        }
+    }
+}
+
+console.log("🎯 Fetched Goals:", goals);
+
+
+// 7) Process Events for Calendar View
+let eventsByDay = {};
+
+Object.entries(calendarEvents).forEach(([calendarId, events]) => {
+    events.forEach(event => {
+        if (event.start && event.start.dateTime) {
+            let eventDate = new Date(event.start.dateTime).toDateString();
+
+            // Find the associated calendar to get its plan type
+            let eventCalendar = calendars.find(cal => cal.id === calendarId);
+            let planType = eventCalendar ? eventCalendar.dataCalendarType : "unknown";
+
+            // Attach the correct plan type and calendar ID
+            event.planType = planType;
+            event.calendarId = calendarId;
+
+            if (!eventsByDay[eventDate]) {
+                eventsByDay[eventDate] = [];
+            }
+            eventsByDay[eventDate].push(event);
+        }
+    });
+});
+
+
+    // 8) Sort Days for Display
+    let sortedDays = Object.keys(eventsByDay).sort((a, b) => new Date(a) - new Date(b));
+
+    console.log("📅 Sorted Calendar Days:", sortedDays);
+    console.log("📌 Events Grouped by Day:", eventsByDay);
 
     // 9) Render home.ejs
     res.render("home", {
@@ -169,15 +200,19 @@ app.get("/", async (req, res) => {
       plans,
       calendars,
       calendarEvents,
+      sortedDays,
+      eventsByDay,
+      goals,
       planBuckets: planBuckets || {}
     });
+
   } catch (error) {
     console.error("Failed to fetch tasks or events:", error.message);
     res.send("Failed to fetch tasks or events from Microsoft Graph.");
   }
 });
 
-
+// 10) Start Server
 app.listen(PORT, () => {
   console.log(`✅ Server running on ${BASE_URL}`);
 });
