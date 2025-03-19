@@ -49,7 +49,7 @@ app.get("/", async (req, res) => {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
     });
     let rawPlans = plansRes.data.value || [];
-    console.log("All Plans from Graph", JSON.stringify(rawPlans, null, 2));
+    // console.log("All Plans from Graph", JSON.stringify(rawPlans, null, 2));
 
     // Filter to keep only the ones with exactly the titles we want
     let plans = rawPlans.filter(plan =>
@@ -79,36 +79,51 @@ app.get("/", async (req, res) => {
         };
       }
     });
-    
-    // 3) For each plan, fetch buckets
+
+    // 3) Fetch all available buckets per plan type
     const bucketMap = {};
+    const planBuckets = {}; // Store buckets categorized by plan type
+
     for (const plan of plans) {
       const bucketsRes = await axios.get(`https://graph.microsoft.com/v1.0/planner/plans/${plan.id}/buckets`, {
         headers: { Authorization: `Bearer ${req.session.accessToken}` }
       });
+
       const buckets = bucketsRes.data.value || [];
+
+      // Store bucket information
+      planBuckets[plan.dataPlanType] = planBuckets[plan.dataPlanType] || [];
       buckets.forEach(bucket => {
         bucketMap[bucket.id] = { name: bucket.name, planId: bucket.planId };
+        planBuckets[plan.dataPlanType].push(bucket.name);
       });
     }
 
-    // 4) Attach bucketName and dataTaskType to each task
+    console.log("Plan Buckets Data:", JSON.stringify(planBuckets, null, 2));
+
+    // 4) Now that we have `bucketMap`, update tasks with their bucket names
     tasks.forEach(task => {
       if (bucketMap[task.bucketId]) {
         task.bucketName = bucketMap[task.bucketId].name;
       } else {
-        task.bucketName = "UnknownBucket";
+        task.bucketName = "Unknown Bucket"; // More readable fallback
       }
+
+      // Ensure task has a valid plan type
       const matchingPlan = plans.find(plan => plan.id === task.planId);
-      task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "school";
+      task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "unknown";
+
+      console.log(`Task: ${task.title}, Bucket: ${task.bucketName}, Type: ${task.dataTaskType}`);
     });
+
+
 
     // 5) Get all calendars
     const calRes = await axios.get("https://graph.microsoft.com/v1.0/me/calendars", {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
     });
     let rawCalendars = calRes.data.value || [];
-    console.log("All Outlook Calendars from Graph:", JSON.stringify(rawCalendars, null, 2));
+    // console.log("All Outlook Calendars from Graph:", JSON.stringify(rawCalendars, null, 2));
 
     // 6) Filter to keep only the ones named "Calendar", "Personal", or "School"
     let calendars = rawCalendars.filter(cal =>
@@ -153,7 +168,8 @@ app.get("/", async (req, res) => {
       tasks,
       plans,
       calendars,
-      calendarEvents
+      calendarEvents,
+      planBuckets: planBuckets || {}
     });
   } catch (error) {
     console.error("Failed to fetch tasks or events:", error.message);

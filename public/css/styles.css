@@ -1,252 +1,240 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #000 !important; /* Full black for Magic Mirror */
+}
 
 body {
-    background-color: #1a1a1a;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 20px;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
 }
 
-.container {
-    max-width: 800px;
-    margin: auto;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    border-radius: 10px;
+/* Time & Date Header */
+.time-date-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  text-align: center;
+  padding: 20px;
+  z-index: 10;
 }
 
-.profile-switcher {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
+/* Content Layout */
+.content {
+  margin-top: 140px;
 }
 
-.profile-btn, .switch-btn {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.profile-btn:hover, .switch-btn:hover {
-    background: rgba(255, 255, 255, 0.4);
-}
-
+/* Dashboard Layout */
 .dashboard {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  height: calc(100vh - 160px);
+  gap: 10px;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
-.section {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 8px;
-}
-
-.whiteboard-btn {
-    margin-top: 20px;
-    background: #4ECDC4;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    color: black;
-    font-weight: bold;
-}
-
-.whiteboard {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
-}
-
-.close-whiteboard {
-    background: red;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-
-.card {
-  background-color: #1E1E1E;
+/* Tasks & Schedule Sections (Equal 50/50 Size) */
+.dashboard .card {
+  flex: 1 1 48%;
+  min-height: 300px;
+  max-height: 80vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(20, 20, 20, 0.7); /* Dark translucent */
   border-radius: 12px;
-  padding: 25px;
+  padding: 20px;
   box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
-  text-align: left; /* So text aligns properly in tasks & schedule */
+  text-align: left;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 .card h2 {
-  font-size: 1.3rem;
-  margin-bottom: 10px;
-  color: #FFFFFF;
+  margin: 0;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
 }
-.card p,
-.card li {
-  color: white;
+
+/* Task List Styling */
+.task-section {
+  color: white !important; /* Ensures task text is white */
+  font-size: 1.1rem;
+  padding: 5px;
 }
-/* Whiteboard container */
-.whiteboard-container {
-  display: none;
-  position: fixed;
-  top: 50%; 
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff; 
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0,0,0,0.3);
-  z-index: 1000;
+.task-section.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
-/* Example color associations */
+
+/* Filter Buttons */
 .filter-btn {
-    border: 2px solid transparent;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    margin: 0 5px;
-    cursor: pointer;
-  }
-  .filter-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-  
-  /* Outline color for each type */
-  .filter-work {
-    border-color: #FF6B6B; /* red-ish */
-  }
-  .filter-school {
-    border-color: #FFE66D; /* yellow-ish */
-  }
-  .filter-personal {
-    border-color: #4ECDC4; /* turquoise */
-  }
-  .filter-all {
-    border-color: #ccc;
-  }
-  
-  /* Bullets for tasks or schedule items */
-  .bullet {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }
-  
-  /* Color each bullet by plan type */
-  .bullet-work {
-    background-color: #FF6B6B;
-  }
-  .bullet-school {
-    background-color: #FFE66D;
-  }
-  .bullet-personal {
-    background-color: #4ECDC4;
-  }
- /* Style for day headers in the schedule */
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 0 5px;
+  cursor: pointer;
+  transition: border-color 0.3s, color 0.3s;
+  font-size: 1.1rem;
+}
+
+/* Active Filter Button States */
+.filter-btn.active.filter-work {
+  border-color: #FF6B6B !important;
+  color: #FF6B6B !important;
+}
+.filter-btn.active.filter-school {
+  border-color: #FFE66D !important;
+  color: #FFE66D !important;
+}
+.filter-btn.active.filter-personal {
+  border-color: #4ECDC4 !important;
+  color: #4ECDC4 !important;
+}
+.filter-btn.active.filter-all {
+  border-color: #904ecd !important;
+  color:  #904ecd !important;
+}
+
+/* Hide Filter Buttons When Inactive */
+.filter-btn.hidden {
+  display: none !important;
+}
+
+/* Bucket Filter Section */
+.bucket-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px;
+  max-width: 100%;
+}
+
+/* Bucket Filter Buttons */
+.bucket-filter-button {
+  flex: 1 1 calc(33% - 10px);
+  text-align: center;
+  white-space: nowrap;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin: 5px;
+  cursor: pointer;
+  transition: border-color 0.3s, color 0.3s;
+  font-size: 1rem;
+}
+
+/* Active Bucket States */
+
+.bucket-filter-button.active {
+  border-color:#904ecd !important; /* Gold Border for Selected Bucket */
+  color: #904ecd  !important;
+  font-weight: bold;
+}
+
+
+/* Hide Bucket Switcher if Empty */
+.bucket-switcher:has(.bucket-filter-button:not(.hidden)) {
+  display: flex;
+}
+
+/* Hide Buttons When Inactive */
+.bucket-filter-button.hidden {
+  display: none !important;
+}
+
+/* Hide Task Card When No Tasks */
+.card.hidden {
+  display: none;
+}
+
+/* Bullets for Task Types */
+.bullet {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* Bullet Colors */
+.bullet-work {
+  background-color: #FF6B6B;
+}
+.bullet-school {
+  background-color: #FFE66D;
+}
+.bullet-personal {
+  background-color: #4ECDC4;
+}
+
+/* Schedule Styling */
 .schedule-day {
-    margin-top: 15px;
-    padding-bottom: 5px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #aaa;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  /* Style for day headers in the schedule */
-.schedule-day {
-    margin-top: 15px;
-    padding-bottom: 5px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #aaa;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  /* SCHEDULE CARD WRAPPER */
-  .schedule-card {
-    position: relative;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  
-  /* HEADER SECTION */
-  .schedule-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  .schedule-header h2 {
-    margin: 0;
-    font-size: 1.2rem;
-  }
-  .schedule-icons i {
-    margin-left: 12px;
-    cursor: pointer;
-    color: #bbb;
-    font-size: 1.1rem;
-  }
-  
-  /* EVENT LIST */
-  .schedule-event-list {
-    margin-top: 5px;
-  }
-  
-  /* DAY GROUP CONTAINER */
-  .schedule-day-group {
-    margin-bottom: 10px;
-  }
-  
-  /* INDIVIDUAL EVENT ROW */
-  .schedule-event {
-    display: flex;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  .schedule-event:last-child {
-    border-bottom: none;
-  }
-  
-  /* TIME COLUMN */
-  .schedule-event .time {
-    width: 60px;
-    text-align: left;
-    font-weight: bold;
-    color: #ccc;
-  }
-  
-  /* EVENT INFO COLUMN */
-  .schedule-event .event-info {
-    display: flex;
-    align-items: center;
-    margin-left: 15px;
-  }
-  
-  /* BULLET STYLES */
-  .schedule-event .bullet {
-    margin-right: 8px;
-  }
-  .schedule-event .event-title {
-    font-weight: normal;
-    color: #fff;
-  }
-  .hidden {
-    display: none !important;
-  }
-  
+  margin-top: 15px;
+  padding-bottom: 5px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.schedule-card {
+  position: relative;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.schedule-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+.schedule-icons i {
+  margin-left: 12px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.1rem;
+}
+.schedule-event {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.schedule-event:last-child {
+  border-bottom: none;
+}
+.schedule-event .time {
+  width: 60px;
+  text-align: left;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.6);
+}
+.schedule-event .event-info {
+  display: flex;
+  align-items: center;
+  margin-left: 15px;
+}
+.schedule-event .bullet {
+  margin-right: 8px;
+}
+.schedule-event .event-title {
+  font-weight: normal;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Hide Empty Schedule Groups */
+.schedule-day-group.hidden {
+  display: none;
+}
