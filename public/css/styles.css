@@ -1,5 +1,7 @@
+/* === General Styling === */
 html, body {
   height: 100%;
+  width: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -12,84 +14,188 @@ body {
   text-align: center;
 }
 
-/* Time & Date Header */
-.time-date-header {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  text-align: center;
-  padding: 20px;
-  z-index: 10;
-}
-
-/* Content Layout */
-.content {
-  margin-top: 140px;
-}
-
-/* Dashboard Layout: Ensure Schedule is in Top-Right */
+/* === Ensure the Dashboard is Fully Responsive === */
 .dashboard {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 10px;
-  height: calc(100vh - 160px);
-  padding: 10px;
+  grid-template-columns: repeat(2, 1fr); /* Two columns for larger screens */
+  grid-template-rows: auto auto; /* Two rows */
+  gap: 1.5vw; /* Dynamic spacing */
+  padding: 1.5vw;
+  height: calc(100vh - 10vh);
   box-sizing: border-box;
 }
 
-/* Card Styling (Tasks, Schedule, Calendar, Goals) */
+/* === Card Layout for Tasks, Schedule, Calendar, Goals === */
 .dashboard .card {
   display: flex;
   flex-direction: column;
   justify-content: start;
   align-items: center;
-  padding: 20px;
+  padding: 1vw;
   min-height: 40vh;
   max-height: 80vh;
-  background-color: rgba(20, 20, 20, 0.7); /* Dark translucent */
+  background-color: rgba(20, 20, 20, 0.7);
   border-radius: 12px;
   box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
   text-align: left;
   border: 2px solid rgba(255, 255, 255, 0.2);
   overflow: auto;
-}
-
-/* Ensure Cards Maintain Their Size */
-.dashboard .card {
-  min-width: 48%;
-}
-.card h2 {
-  margin: 0;
-  font-size: 1.2rem;
+  font-size: 1vw; /* Responsive text */
   color: rgba(255, 255, 255, 0.8);
+
 }
 
-/* Task List Styling */
-.task-section {
-  color: white !important; /* Ensures task text is white */
-  font-size: 1.1rem;
-  padding: 5px;
-}
-.task-section.hidden {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
+
+
+/* === Smaller Card Headers for Better Fit === */
+.card h2 {
+  font-size: 1vw; /* Reduced from default size */
+  margin: 0;
+  text-align: center;
 }
 
-/* Filter Buttons */
+/* === Card Header (Includes Buttons) === */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 0.5vw;
+
+}
+
+/* === Controls (Switch & Expand Buttons) === */
+.card-controls {
+  display: flex;
+  gap: 0.5vw;
+}
+
+/* === Control Buttons (Small & Minimal) === */
+.control-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.7vw;
+  padding: 0.3vw 0.8vw;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+}
+
+/* === Responsive Adjustments for Smaller Screens === */
+@media (max-width: 1024px) {
+  .control-btn {
+      font-size: 1vw;
+      padding: 0.4vw 1vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .control-btn {
+      font-size: 1.2vw;
+      padding: 0.5vw 1.2vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .control-btn {
+      font-size: 1.5vw;
+      padding: 0.6vw 1.5vw;
+  }
+}
+
+
 .filter-btn {
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.6); /* Thinner border */
   background: transparent;
   color: rgba(255, 255, 255, 0.8);
-  padding: 10px 20px;
-  border-radius: 5px;
-  margin: 0 5px;
+  padding: 6px 12px; /* Smaller padding */
+  border-radius: 4px; /* Slightly reduced rounding */
+  margin: 0 3px; /* Less margin for tighter spacing */
   cursor: pointer;
   transition: border-color 0.3s, color 0.3s;
-  font-size: 1.1rem;
+  font-size: 0.8rem; /* Smaller font size */
 }
 
+/* === Make Bucket Buttons Smaller & Wrapped === */
+.bucket-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3vw; /* Adjusted spacing */
+  max-width: 100%;
+  padding: 0.3vw;
+  overflow-x: auto;
+  max-height: 6vh;
+}
+
+/* === Smaller Bucket Buttons === */
+.bucket-filter-button {
+  flex: 1 1 auto;
+  min-width: 5vw;
+  max-width: 10vw;
+  text-align: center;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.3vw 0.6vw; /* Dynamic padding */
+  font-size: 0.7vw; /* Dynamic font size */
+  border-radius: 5px;
+  margin: 0.2vw; /* Adjusted margins */
+  cursor: pointer;
+  transition: border-color 0.3s, color 0.3s;
+}
+
+/* === Responsive Adjustments for Smaller Screens === */
+@media (max-width: 1024px) {
+  .dashboard {
+    grid-template-columns: 1fr; /* Single column layout on smaller screens */
+  }
+
+  .bucket-switcher {
+    overflow-x: scroll;
+    flex-wrap: nowrap;
+  }
+
+  .bucket-filter-button {
+    min-width: 8vw;
+    max-width: 12vw;
+    font-size: 1vw;
+    padding: 0.5vw 0.8vw;
+  }
+}
+
+/* === Task List Styling === */
+.task-section {
+  color: white !important;
+  font-size: 1vw;
+  padding: 0.5vw;
+}
+
+
+
+/*KEEEEEP*/
+
+/* Goal Borders Based on Plan */
+.border-work {
+  border-left: 4px solid #FF6B6B !important; /* Red for Work */
+}
+.border-school {
+  border-left: 4px solid #FFE66D !important; /* Yellow for School */
+}
+.border-personal {
+  border-left: 4px solid #4ECDC4 !important; /* Teal for Personal */
+}
+/* Hide Goals That Are Not in the Selected Plan */
+.goal-item.hidden {
+  display: none !important;
+}
 /* Active Filter Button States */
 .filter-btn.active.filter-work {
   border-color: #FF6B6B !important;
@@ -112,32 +218,164 @@ body {
 .filter-btn.hidden {
   display: none !important;
 }
-
-/* Bucket Filter Section */
-.bucket-switcher {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 5px;
-  padding: 10px;
-  max-width: 100%;
-}
-
-/* Bucket Filter Buttons */
-.bucket-filter-button {
-  flex: 1 1 calc(33% - 10px);
+/* === Days of the Week Header Row (Properly Centered) === */
+.calendar-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7 equal columns */
   text-align: center;
-  white-space: nowrap;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 10px 15px;
-  border-radius: 5px;
-  margin: 5px;
-  cursor: pointer;
-  transition: border-color 0.3s, color 0.3s;
-  font-size: 1rem;
+  font-weight: bold;
+  font-size: 0.7vw;
+  color: rgba(255, 255, 255, 0.9);
+  width: 100%;
 }
+
+/* === Ensure Days Are Centered Within Their Columns === */
+.day-label {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /*height: 2vw; /* Smaller height to avoid pushing content */
+  text-transform: uppercase;
+}
+
+/* === Fully Responsive Calendar Grid === */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 0.1vw;
+  /* padding: 0.3vw; */
+  width: 100%;
+  height: 100%;
+}
+
+/* === Calendar Days (Compact) === */
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  padding: 0.1vw;
+  min-height: 3.5vh;
+  font-size: 0.5vw;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+}
+
+/* === Calendar Events (Compact) === */
+.calendar-event {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.1vh;
+  border-radius: 2px;
+  margin: 0.05vh 0;
+  font-size: 0.6vh;
+  display: flex;
+  align-items: center;
+  gap: 0.1vh;
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 1024px) {
+  .calendar-days-header {
+      font-size: 0.8vw;
+  }
+
+  .day-label {
+      height: 2.2vw;
+  }
+
+  .calendar-day {
+      font-size: 0.6vw;
+      min-height: 4vh;
+  }
+
+  .calendar-event {
+      font-size: 0.4vw;
+      padding: 0.1vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-days-header {
+      font-size: 1vw;
+  }
+
+  .day-label {
+      height: 2.5vw;
+  }
+
+  .calendar-day {
+      font-size: 0.7vw;
+      min-height: 5vh;
+  }
+
+  .calendar-event {
+      font-size: 0.5vw;
+      padding: 0.2vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-days-header {
+      font-size: 1.2vw;
+  }
+
+  .day-label {
+      height: 3vw;
+  }
+
+  .calendar-grid {
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+  }
+
+  .calendar-day {
+      font-size: 0.8vw;
+      min-height: 6vh;
+  }
+
+  .calendar-event {
+      font-size: 0.6vw;
+      padding: 0.2vw;
+  }
+}
+
+/* === Highlight the Current Day in the Calendar === */
+.calendar-day.today {
+  border: 2px solid white; /* White border for visibility */
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.15); /* Light background for extra highlight */
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.3); /* Subtle glow effect */
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 1024px) {
+  .calendar-day.today {
+      border-width: 1.5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-day.today {
+      border-width: 1px;
+  }
+}
+
+.task-section.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+/* Time & Date Header */
+.time-date-header {
+  text-align: center;
+  font-size: 1vw;
+  padding: 10px;
+}
+
 
 /* Active Bucket States */
 
@@ -166,11 +404,10 @@ body {
 /* Bullets for Task Types */
 .bullet {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 10px; /* Smaller bullet */
+  height: 10px;
   border-radius: 50%;
 }
-
 /* Bullet Colors */
 .bullet-work {
   background-color: #FF6B6B;
@@ -182,168 +419,257 @@ body {
   background-color: #4ECDC4;
 }
 
-/* Schedule Styling */
-.schedule-day {
-  margin-top: 15px;
-  padding-bottom: 5px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.5);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+
+
+/* === Schedule Styling === */
 .schedule-card {
-  position: relative;
-  padding: 20px;
-  margin-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  padding: 1vw;
+  min-height: 40vh;
+  max-height: 80vh;
+  background-color: rgba(20, 20, 20, 0.7);
+  border-radius: 12px;
+  box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
+  text-align: left;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  overflow: auto;
+  font-size: 1vw; /* Responsive text */
+  color: rgba(255, 255, 255, 0.8);
 }
+
+/* === Schedule Header === */
 .schedule-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 0.5vw;
+  width: 100%;
 }
+
 .schedule-header h2 {
   margin: 0;
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9vw; /* Slightly reduced */
+  color: rgba(255, 255, 255, 0.9);
 }
+
+/* === Schedule Icons (Smaller & Responsive) === */
 .schedule-icons i {
-  margin-left: 12px;
+  margin-left: 0.6vw;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 1.1rem;
+  font-size: 0.8vw;
 }
+
+/* === Schedule Event List === */
+.schedule-event-list {
+  width: 100%;
+}
+
+/* === Schedule Day Styling === */
+.schedule-day {
+  margin-top: 0.8vw;
+  padding-bottom: 0.3vw;
+  font-size: 0.7vw; /* Reduced for better spacing */
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === Schedule Event Styling === */
 .schedule-event {
   display: flex;
   align-items: center;
-  padding: 6px 0;
+  padding: 0.5vw 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .schedule-event:last-child {
   border-bottom: none;
 }
+
+/* === Event Time Display === */
 .schedule-event .time {
-  width: 60px;
+  width: 5vw; /* Responsive width */
   text-align: left;
   font-weight: bold;
   color: rgba(255, 255, 255, 0.6);
 }
+
+/* === Event Info Section === */
 .schedule-event .event-info {
   display: flex;
   align-items: center;
-  margin-left: 15px;
-}
-.schedule-event .bullet {
-  margin-right: 8px;
-}
-.schedule-event .event-title {
-  font-weight: normal;
-  color: rgba(255, 255, 255, 0.8);
+  margin-left: 1vw;
 }
 
-/* Hide Empty Schedule Groups */
+/* === Bullet Indicator for Event Type === */
+.schedule-event .bullet {
+  margin-right: 0.5vw;
+  width: 0.7vw; /* Smaller bullet */
+  height: 0.7vw;
+  border-radius: 50%;
+}
+
+/* === Event Title === */
+.schedule-event .event-title {
+  font-weight: normal;
+  font-size: 0.8vw; /* Reduced size */
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* === Hide Empty Schedule Groups === */
 .schedule-day-group.hidden {
   display: none;
 }
-/* Calendar Styling */
-.calendar-card {
-    padding: 20px;
-    margin-bottom: 20px;
-    background-color: rgba(20, 20, 20, 0.7); 
-    border-radius: 12px;
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+
+/* === Responsive Adjustments for Smaller Screens === */
+@media (max-width: 1024px) {
+  .schedule-card {
+      min-height: 45vh;
+  }
+
+  .schedule-header h2 {
+      font-size: 1vw;
+  }
+
+  .schedule-icons i {
+      font-size: 1vw;
+  }
+
+  .schedule-day {
+      font-size: 0.8vw;
+  }
+
+  .schedule-event {
+      font-size: 0.8vw;
+  }
+
+  .schedule-event .time {
+      width: 6vw;
+  }
+
+  .schedule-event .bullet {
+      width: 1vw;
+      height: 1vw;
+  }
 }
 
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    padding: 10px;
+@media (max-width: 768px) {
+  .schedule-card {
+      min-height: 50vh;
+  }
+
+  .schedule-header h2 {
+      font-size: 1.1vw;
+  }
+
+  .schedule-icons i {
+      font-size: 1.1vw;
+  }
+
+  .schedule-day {
+      font-size: 0.9vw;
+  }
+
+  .schedule-event {
+      font-size: 0.9vw;
+  }
+
+  .schedule-event .time {
+      width: 7vw;
+  }
+
+  .schedule-event .bullet {
+      width: 1.2vw;
+      height: 1.2vw;
+  }
 }
 
-.calendar-day {
-    display: flex;
-    flex-direction: column;
-    justify-content: start;
-    align-items: center;
-    padding: 10px;
-    min-height: 80px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    text-align: center;
-    font-size: 1rem;
-    color: white;
-    font-weight: bold;
+@media (max-width: 480px) {
+  .schedule-card {
+      min-height: 55vh;
+  }
+
+  .schedule-header h2 {
+      font-size: 1.2vw;
+  }
+
+  .schedule-icons i {
+      font-size: 1.2vw;
+  }
+
+  .schedule-day {
+      font-size: 1vw;
+  }
+
+  .schedule-event {
+      font-size: 1vw;
+  }
+
+  .schedule-event .time {
+      width: 8vw;
+  }
+
+  .schedule-event .bullet {
+      width: 1.5vw;
+      height: 1.5vw;
+  }
 }
 
-.calendar-day.empty {
-    background: none;
-    border: none;
-}
 
-/* Calendar Event Borders Based on Plan */
-.border-work {
-  border-left: 4px solid #FF6B6B !important; /* Red for Work */
-}
-.border-school {
-  border-left: 4px solid #FFE66D !important; /* Yellow for School */
-}
-.border-personal {
-  border-left: 4px solid #4ECDC4 !important; /* Teal for Personal */
-}
-.border-unknown {
-  border-left: 4px solid #888 !important; /* Gray for Unknown */
-}
-
-/* Calendar Events */
-.calendar-event {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 5px;
-  border-radius: 4px;
-  margin: 3px 0;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* Hide Events That Are Not in the Selected Plan */
-.calendar-event.hidden {
-  display: none !important;
-}
-/* Goals Section */
+/* === Goals Section === */
 .goals-card {
-  padding: 20px;
-  background-color: rgba(20, 20, 20, 0.7); 
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  padding: 1vw;
+  min-height: 40vh;
+  max-height: 80vh;
+  background-color: rgba(20, 20, 20, 0.7);
   border-radius: 12px;
   box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
+  text-align: left;
   border: 2px solid rgba(255, 255, 255, 0.2);
-  min-height: 40vh;
+  overflow: auto;
+  font-size: 1vw; /* Responsive text */
+  color: rgba(255, 255, 255, 0.8);
 }
 
+/* === Goals List === */
 .goal-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  width: 100%;
 }
 
+/* === Individual Goal Item === */
 .goal-item {
-  padding: 8px;
-  margin: 5px 0;
-  border-left: 4px solid white;
+  padding: 0.6vw;
+  margin: 0.5vw 0;
+  border-left: 0.3vw solid white;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  font-size: 0.9vw; /* Slightly reduced */
   color: white;
 }
 
-/* Goal Progress Bar */
+/* === Goal Progress Bar === */
 .goal-progress {
   width: 100%;
-  height: 6px;
+  height: 0.4vw; /* Thinner progress bar */
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
-  margin-top: 5px;
+  margin-top: 0.3vw;
   position: relative;
 }
 
@@ -353,13 +679,53 @@ body {
   border-radius: 3px;
 }
 
-/* Goal Borders Based on Plan */
-.border-work {
-  border-left: 4px solid #FF6B6B !important; /* Red for Work */
+/* === Hide Goals That Are Not in the Selected Plan === */
+.goal-item.hidden {
+  display: none !important;
 }
-.border-school {
-  border-left: 4px solid #FFE66D !important; /* Yellow for School */
+
+/* === Responsive Adjustments for Smaller Screens === */
+@media (max-width: 1024px) {
+  .goals-card {
+      min-height: 45vh;
+  }
+
+  .goal-item {
+      font-size: 0.8vw;
+      padding: 0.5vw;
+  }
+
+  .goal-progress {
+      height: 0.3vw;
+  }
 }
-.border-personal {
-  border-left: 4px solid #4ECDC4 !important; /* Teal for Personal */
+
+@media (max-width: 768px) {
+  .goals-card {
+      min-height: 50vh;
+  }
+
+  .goal-item {
+      font-size: 0.9vw;
+      padding: 0.4vw;
+  }
+
+  .goal-progress {
+      height: 0.3vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .goals-card {
+      min-height: 55vh;
+  }
+
+  .goal-item {
+      font-size: 1vw;
+      padding: 0.3vw;
+  }
+
+  .goal-progress {
+      height: 0.2vw;
+  }
 }

@@ -1,0 +1,75 @@
+<div class="card">
+  <div class="card-header">
+    <h2><i class="bi bi-calendar3"></i> Next 3 Days</h2>
+    <div class="card-controls">
+      <button class="control-btn switch-btn" onclick="switchTasks('tasks')">Switch</button>
+      <button class="control-btn expand-btn">Expand</button>
+    </div>
+  </div>
+
+  <script>
+    console.log("📌 Passed Tasks (All):", <%= JSON.stringify(tasks) %>);
+  </script>
+
+  <!-- Bucket Filter Buttons -->
+  <div class="bucket-switcher my-3">
+    <button class="bucket-filter-button active" data-bucket="all"
+      onclick="filterContent('all', 'bucket', this)">All</button>
+
+    <% 
+      let today = new Date().toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      let threeDaysLater = new Date();
+      threeDaysLater.setDate(new Date().getDate() + 3);
+      threeDaysLater = threeDaysLater.toISOString().split("T")[0]; // Format correctly
+
+      // Filter tasks correctly from full task list
+      let nextThreeDaysTasks = tasks.filter(task => 
+          task.dueDate && task.dueDate > today && task.dueDate <= threeDaysLater
+      );
+
+      let availableBuckets = new Set(nextThreeDaysTasks.map(task => task.bucketName).filter(name => name));
+
+      console.log("✅ Corrected Next 3 Days Tasks (After Full Load):", nextThreeDaysTasks);
+      console.log("✅ Corrected Available Buckets:", Array.from(availableBuckets));
+    %>
+
+    <% if (availableBuckets.size > 0) { %>
+      <% availableBuckets.forEach(bucket => { %>
+        <button class="bucket-filter-button" data-bucket="<%= bucket %>"
+          onclick="filterContent('<%= bucket %>', 'bucket', this)">
+          <%= bucket %>
+        </button>
+      <% }) %>
+    <% } else { %>
+      <p class="no-buckets">No buckets available.</p>
+    <% } %>
+  </div>
+
+  <!-- Task List for Next 3 Days -->
+  <ul class="list-unstyled">
+    <% if (nextThreeDaysTasks.length === 0) { %>
+      <p class="no-tasks">No tasks due in the next 3 days.</p>
+    <% } else { %>
+      <% nextThreeDaysTasks
+          .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)) // Sort by chronological order
+          .forEach(task => { %>
+        <li class="task-section d-flex align-items-center mb-2" style="gap: 8px;"
+          data-task-type="<%= task.dataTaskType %>" data-bucket="<%= task.bucketName %>">
+
+          <!-- Colored bullet associated with task type -->
+          <span class="bullet bullet-<%= task.dataTaskType %>"></span>
+
+          <i class="bi <%= task.completed
+            ? 'bi-check-circle-fill text-success'
+            : 'bi-check-circle'
+          %>"></i>
+
+          <span>
+            <%= task.title %> - <%= new Date(task.dueDate).toLocaleDateString() %>
+            <small>(<%= task.bucketName %>)</small>
+          </span>
+        </li>
+      <% }) %>
+    <% } %>
+  </ul>
+</div>

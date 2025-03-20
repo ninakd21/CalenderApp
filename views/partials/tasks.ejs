@@ -1,49 +1,59 @@
 <!-- views/partials/tasks.ejs -->
 <div class="card">
-  <h2><i class="bi bi-list-task"></i> Today's Tasks</h2>
+  <div class="card-header">
+    <h2><i class="bi bi-list-task"></i> Today's Tasks</h2>
+    <div class="card-controls">
+      <button class="control-btn switch-btn" onclick="switchTasks('threedaystasks')">Switch</button>
+      <button class="control-btn expand-btn">Expand</button>
+    </div>
+  </div>
 
-  <!-- Additional filter buttons for buckets if needed -->
   <!-- Bucket Filter Buttons -->
-<!-- Bucket Filter Buttons -->
-<!-- Bucket Filter Buttons -->
-<div class="bucket-switcher my-3">
-  <button class="bucket-filter-button active" data-bucket="all"
-    onclick="filterContent('all', 'bucket', this)">All</button>
+  <div class="bucket-switcher my-3">
+    <button class="bucket-filter-button active" data-bucket="all"
+      onclick="filterContent('all', 'bucket', this)">All</button>
 
-  <% if (planBuckets && Object.keys(planBuckets).length > 0) { %>
-    <% Object.keys(planBuckets).forEach(planType => { %>
-      <% planBuckets[planType].forEach((bucket, index) => { %>
-        <button class="bucket-filter-button" data-bucket="<%= bucket %>" data-plan-type="<%= planType %>"
-          onclick="filterContent('<%= bucket %>', 'bucket', this)">
-          <%= bucket %>
-        </button>
+    <% if (planBuckets && Object.keys(planBuckets).length > 0) { %>
+      <% Object.keys(planBuckets).forEach(planType => { %>
+        <% planBuckets[planType].forEach((bucket, index) => { %>
+          <button class="bucket-filter-button" data-bucket="<%= bucket %>" data-plan-type="<%= planType %>"
+            onclick="filterContent('<%= bucket %>', 'bucket', this)">
+            <%= bucket %>
+          </button>
+        <% }) %>
       <% }) %>
-    <% }) %>
-  <% } else { %>
-    <p class="no-buckets">No buckets available.</p>
-  <% } %>
-</div>
+    <% } else { %>
+      <p class="no-buckets">No buckets available.</p>
+    <% } %>
+  </div>
 
-
+  <!-- Task List (Only Tasks Due Today) -->
+  <% let today = new Date().toISOString().split("T")[0]; %>
 
   <ul class="list-unstyled">
-    <% tasks.forEach(task=> { %>
-      <li class="task-section d-flex align-items-center mb-2" style="gap: 8px;"
-        data-task-type="<%= task.dataTaskType %>" data-bucket="<%= task.bucketName %>">
+    <% let todayTasks = tasks.filter(task => task.dueDate && task.dueDate.split("T")[0] === today); %>
 
-        <!-- Colored bullet associated with task type -->
-        <span class="bullet bullet-<%= task.dataTaskType %>"></span>
+    <% if (todayTasks.length === 0) { %>
+      <p class="no-tasks">No tasks due today.</p>
+    <% } else { %>
+      <% todayTasks.forEach(task => { %>
+        <li class="task-section d-flex align-items-center mb-2" style="gap: 8px;"
+          data-task-type="<%= task.dataTaskType %>" data-bucket="<%= task.bucketName %>">
 
-        <i class="bi <%= task.status === 'completed'
-          ? 'bi-check-circle-fill text-success'
-          : 'bi-check-circle'
-        %>"></i>
+          <!-- Colored bullet associated with task type -->
+          <span class="bullet bullet-<%= task.dataTaskType %>"></span>
 
-        <span>
-          <%= task.title %>
+          <i class="bi <%= task.completed
+            ? 'bi-check-circle-fill text-success'
+            : 'bi-check-circle'
+          %>"></i>
+
+          <span>
+            <%= task.title %>
             <small>(<%= task.bucketName %>)</small>
-        </span>
-      </li>
+          </span>
+        </li>
       <% }) %>
+    <% } %>
   </ul>
 </div>

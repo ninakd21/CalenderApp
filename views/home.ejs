@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>
     <%= title %>
   </title>
@@ -48,8 +49,10 @@
     </div>
 <!-- Dashboard Sections -->
 <div class="dashboard">
-  <!-- Tasks Partial -->
-  <%- include("partials/tasks", { tasks: tasks, planBuckets: planBuckets || {} }) %>
+  <!-- Task Section Wrapper (Loads Tasks Dynamically) -->
+  <div id="task-container">
+    <%- include("partials/tasks", { tasks: tasks, planBuckets: planBuckets || {} }) %>
+  </div>
 
   <!-- Schedule Partial -->
   <%- include("partials/schedule", { calendars: calendars, calendarEvents: calendarEvents }) %>
@@ -60,6 +63,7 @@
   <!-- Goals Partial -->
   <%- include("partials/goals") %>
 </div>
+
 
 
   </div>
@@ -93,6 +97,9 @@
     let selectedPlan = document.querySelector('.filter-btn.active')?.getAttribute('data-plan') || 'all';
     let selectedBucket = document.querySelector('.bucket-filter-button.active')?.getAttribute('data-bucket') || 'all';
 
+    console.log(`🎯 Filter Applied: Dimension = ${dimension}, Filter Value = ${filterValue}`);
+    console.log(`🔍 Current Selected Plan = ${selectedPlan}, Selected Bucket = ${selectedBucket}`);
+
     if (dimension === 'plan') {
         console.log(`🎯 Plan Selected: ${filterValue}`);
 
@@ -113,33 +120,23 @@
         updateBucketFilterButtons(selectedPlan);
         updateScheduleFilter(selectedPlan);
         updateCalendarFilter(selectedPlan);
+        updateGoalsFilter(selectedPlan);
         updateTaskVisibility(selectedPlan, selectedBucket);
     } 
     else if (dimension === 'bucket') {
         console.log(`🎯 Bucket Selected: ${filterValue}`);
 
-        // Find the corresponding plan for the selected bucket
-        let bucketPlanType = btn.getAttribute('data-plan-type');
-
-        // If "All" plans is selected, update Plan to match the selected Bucket
-        if (selectedPlan === 'all') {
-            console.log(`🔄 Updating Plan to ${bucketPlanType} since 'All' was selected.`);
-            document.querySelectorAll('.filter-btn').forEach(button => button.classList.remove('active'));
-            document.querySelector(`.filter-btn[data-plan="${bucketPlanType}"]`)?.classList.add('active');
-            selectedPlan = bucketPlanType;
-        }
-
         // Set the selected bucket
         document.querySelectorAll('.bucket-filter-button').forEach(button => button.classList.remove('active'));
         btn.classList.add('active');
-
         selectedBucket = filterValue;
 
-        console.log(`🔄 Updating Tasks, Schedule, and Calendar for Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
+        console.log(`🔄 Updating Tasks and Schedule for Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
 
         // Now update everything in correct order
         updateScheduleFilter(selectedPlan);
         updateCalendarFilter(selectedPlan);
+        updateGoalsFilter(selectedPlan);
         updateTaskVisibility(selectedPlan, selectedBucket);
     }
 
@@ -189,69 +186,69 @@
 
       console.log(`✅ Buckets Updated for Plan: ${selectedPlan}, Visible Buckets:`, Array.from(availableBuckets.keys()));
     }
-
     function updateTaskVisibility(selectedPlan, selectedBucket) {
-      console.log(`🔄 Updating Tasks: Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
+    console.log(`🔄 Updating Tasks: Plan = ${selectedPlan}, Bucket = ${selectedBucket}`);
 
-      let anyVisibleTask = false;
+    let anyVisibleTask = false;
 
-      document.querySelectorAll('.task-section').forEach(task => {
+    // Select task sections from both "Today's Tasks" and "Next 3 Days Tasks"
+    document.querySelectorAll('.task-section').forEach(task => {
         let taskPlan = (task.getAttribute('data-task-type') || "").trim().toLowerCase();
         let taskBucket = (task.getAttribute('data-bucket') || "").trim().toLowerCase();
         let planMatch = selectedPlan.trim().toLowerCase();
         let bucketMatch = selectedBucket.trim().toLowerCase();
 
         if (!taskPlan || !taskBucket) {
-          console.warn(`⚠ Task missing attributes: ${task.innerText}`);
-          return;
+            console.warn(`⚠ Task missing attributes: ${task.innerText}`);
+            return;
         }
 
         console.log(`📝 Checking Task: ${task.innerText} | Plan: ${taskPlan} | Bucket: ${taskBucket}`);
 
         // Ensure "All" buckets show all tasks instead of hiding them
         let showTask = (planMatch === "all" || taskPlan === planMatch) &&
-          (bucketMatch === "all" || taskBucket === bucketMatch);
+            (bucketMatch === "all" || taskBucket === bucketMatch);
 
         if (showTask) {
-          console.log(`✅ Showing Task: ${task.innerText}`);
-          task.classList.remove('hidden');
-          task.style.display = "flex";  // Ensure visible tasks are displayed
-          anyVisibleTask = true;
+            console.log(`✅ Showing Task: ${task.innerText}`);
+            task.classList.remove('hidden');
+            task.style.display = "flex";  // Ensure visible tasks are displayed
+            anyVisibleTask = true;
         } else {
-          console.log(`❌ Hiding Task: ${task.innerText}`);
-          task.classList.add('hidden');
-          task.style.display = "none";  // Fully hide invalid tasks
+            console.log(`❌ Hiding Task: ${task.innerText}`);
+            task.classList.add('hidden');
+            task.style.display = "none";  // Fully hide invalid tasks
         }
-      });
+    });
 
-      let taskContainer = document.querySelector('.card');
-      let emptyMessage = document.querySelector('#no-tasks-message');
+    // Select task containers from both "Today's Tasks" and "Next 3 Days Tasks"
+    let taskContainers = document.querySelectorAll('.card');
+    let emptyMessage = document.querySelector('#no-tasks-message');
 
-      if (!anyVisibleTask) {
+    if (!anyVisibleTask) {
         // No tasks found, show "No tasks" message
         if (!emptyMessage) {
-          emptyMessage = document.createElement('div');
-          emptyMessage.id = "no-tasks-message";
-          emptyMessage.innerText = "There are no tasks in this bucket.";
-          emptyMessage.style.textAlign = "center";
-          emptyMessage.style.padding = "10px";
-          emptyMessage.style.color = "#ccc";
-          taskContainer.appendChild(emptyMessage);
+            emptyMessage = document.createElement('div');
+            emptyMessage.id = "no-tasks-message";
+            emptyMessage.innerText = "There are no tasks in this bucket.";
+            emptyMessage.style.textAlign = "center";
+            emptyMessage.style.padding = "10px";
+            emptyMessage.style.color = "#ccc";
+            taskContainers.forEach(container => container.appendChild(emptyMessage));
         }
         emptyMessage.style.display = "block";
-      } else {
+    } else {
         // Tasks exist, hide the "No tasks" message
         if (emptyMessage) {
-          emptyMessage.style.display = "none";
+            emptyMessage.style.display = "none";
         }
-      }
-
-      // Ensure the task container remains visible
-      taskContainer.style.display = "block";
-
-      console.log(`✅ Final Task Visibility: Plan = ${selectedPlan}, Bucket = ${selectedBucket}, Any Visible: ${anyVisibleTask}`);
     }
 
+    // Ensure the task containers remain visible
+    taskContainers.forEach(container => container.style.display = "block");
+
+    console.log(`✅ Final Task Visibility: Plan = ${selectedPlan}, Bucket = ${selectedBucket}, Any Visible: ${anyVisibleTask}`);
+}
 
 
     function updateScheduleFilter(selectedPlan) {
@@ -294,14 +291,47 @@
         let eventPlanType = event.getAttribute('data-plan-type');
 
         let shouldShow = selectedPlan === "all" || eventPlanType === selectedPlan;
-        event.classList.toggle('hidden', !shouldShow);
+
+        if (shouldShow) {
+            event.classList.remove('hidden');
+            event.style.display = "flex"; // Ensure visibility
+        } else {
+            event.classList.add('hidden');
+            event.style.display = "none"; // Hide non-matching events
+        }
     });
 
     console.log(`✅ Calendar Events Updated for Plan: ${selectedPlan}`);
 }
 
 
+function updateGoalsFilter(selectedPlan) {
+    console.log(`🔄 Filtering Goals for Plan: ${selectedPlan}`);
+
+    document.querySelectorAll('.goal-item').forEach(goal => {
+        let goalPlanType = goal.getAttribute('data-plan-type');
+
+        let shouldShow = selectedPlan === "all" || goalPlanType === selectedPlan;
+        goal.classList.toggle('hidden', !shouldShow);
+    });
+
+    console.log(`✅ Goals Updated for Plan: ${selectedPlan}`);
+}
+
+
   </script>
+  <script>
+    function switchTasks(view) {
+        console.log(`🔄 Switching Tasks View to: ${view}`);
+        fetch(`/partials/${view}`)
+          .then(response => response.text())
+          .then(html => {
+              document.getElementById('task-container').innerHTML = html;
+          })
+          .catch(error => console.error("Error loading tasks view:", error));
+    }
+    </script>
+    
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

@@ -1,10 +1,30 @@
 <div class="card calendar-card">
-    <h2><i class="bi bi-calendar"></i> Calendar - <span id="calendar-month"></span></h2>
+    <div class="card-header">
+      <h2><i class="bi bi-calendar"></i> Calendar - <span id="calendar-month"></span></h2>
+      <div class="card-controls">
+        <button class="control-btn switch-btn">Switch</button>
+        <button class="control-btn expand-btn">Expand</button>
+      </div>
+    </div>
+    
+    <!-- Days of the Week Header -->
+    <div class="calendar-days-header">
+        <div class="day-label">Sun</div>
+        <div class="day-label">Mon</div>
+        <div class="day-label">Tue</div>
+        <div class="day-label">Wed</div>
+        <div class="day-label">Thu</div>
+        <div class="day-label">Fri</div>
+        <div class="day-label">Sat</div>
+    </div>
+
+    <!-- Calendar Grid -->
     <div class="calendar-grid">
         <% 
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth();
+        const currentDay = now.getDate(); // Get today's date
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const firstDay = new Date(currentYear, currentMonth, 1).getDay();
 
@@ -15,16 +35,16 @@
 
         <% for (let day = 1; day <= daysInMonth; day++) { 
             let fullDate = new Date(currentYear, currentMonth, day).toDateString();
+            let isToday = (day === currentDay) ? "today" : ""; // Apply 'today' class to current day
         %>
-            <div class="calendar-day">
+            <div class="calendar-day <%= isToday %>">
                 <span class="day-label"><%= day %></span>
                 <div class="calendar-events">
                     <% if (eventsByDay[fullDate]) { %>
                         <% eventsByDay[fullDate].forEach(event => { 
                             let planType = event.planType || "unknown";
                         %>
-                            <div class="calendar-event border-<%= planType %>" data-plan-type="<%= planType %>" data-debug="<%= event.subject %> | Plan: <%= planType %>">
-
+                            <div class="calendar-event border-<%= planType %>" data-plan-type="<%= planType %>">
                                 <%= event.subject %> - 
                                 <%= new Date(event.start.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
                             </div>
