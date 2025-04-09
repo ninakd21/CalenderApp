@@ -38,105 +38,119 @@ app.get("/partials/:view", async (req, res) => {
   const { view } = req.params;
 
   if (view === "tasks" || view === "threedaystasks") {
-      try {
-          console.log(`🔄 Reloading Data for View: ${view}`);
+    try {
+      console.log(`🔄 Reloading Data for View: ${view}`);
 
-          // 1) Fetch Tasks Again
-          const tasksRes = await axios.get(
-              "https://graph.microsoft.com/v1.0/me/planner/tasks",
-              {
-                  headers: { Authorization: `Bearer ${req.session.accessToken}` },
-              }
-          );
+      // 1) Fetch Tasks Again
+      const tasksRes = await axios.get(
+        "https://graph.microsoft.com/v1.0/me/planner/tasks",
+        {
+          headers: { Authorization: `Bearer ${req.session.accessToken}` },
+        }
+      );
 
-          let tasks = tasksRes.data.value || [];
-          tasks = tasks.map(task => ({
-              ...task,
-              dueDate: task.dueDateTime
-                  ? new Date(task.dueDateTime).toISOString().split("T")[0]
-                  : null,
-              completed: task.percentComplete === 100,
-          }));
+      let tasks = tasksRes.data.value || [];
+      tasks = tasks.map(task => ({
+        ...task,
+        dueDate: task.dueDateTime
+          ? new Date(task.dueDateTime).toISOString().split("T")[0]
+          : null,
+        completed: task.percentComplete === 100,
+      }));
 
-          console.log("✅ Reloaded Tasks with Due Dates:", tasks);
+      console.log("✅ Reloaded Tasks with Due Dates:", tasks);
 
-          // 2) Fetch Plans Again (Ensure Plans Are Updated)
-          const plansRes = await axios.get(
-              "https://graph.microsoft.com/v1.0/me/planner/plans",
-              {
-                  headers: { Authorization: `Bearer ${req.session.accessToken}` },
-              }
-          );
+      // 2) Fetch Plans Again (Ensure Plans Are Updated)
+      const plansRes = await axios.get(
+        "https://graph.microsoft.com/v1.0/me/planner/plans",
+        {
+          headers: { Authorization: `Bearer ${req.session.accessToken}` },
+        }
+      );
+      // Define all acceptable school plan titles (original plus 3 additional)
+      const SCHOOL_PLAN_TITLES = [
+        "School Plan",
+        "School Plan - DIT8210 IT Ldrs as Partners Strat Plng",       // Additional plan 1
+        "School Plan - TS8535 System & App Security Advances",    // Additional plan 2
+        "School Plan - RSCH7864 Quant Design and Analysis"     // Additional plan 3
+      ];
+      let rawPlans = plansRes.data.value || [];
+      let plans = rawPlans.filter(plan => {
+        return plan.title === "Work Plan" ||
+               plan.title === "Personal Plan" ||
+               SCHOOL_PLAN_TITLES.includes(plan.title);
+      }).map(plan => ({
+        ...plan,
+        displayName: plan.title === "Work Plan" 
+          ? "Work Plan" 
+          : plan.title === "Personal Plan" 
+            ? "Personal Plan" 
+            : "School Plan", // Roll up all School plans to a single label
+        dataPlanType: plan.title === "Work Plan" 
+          ? "work" 
+          : plan.title === "Personal Plan" 
+            ? "personal" 
+            : "school"
+      }));
 
-          let rawPlans = plansRes.data.value || [];
-          let plans = rawPlans
-              .filter(plan =>
-                  plan.title === "Work Plan" || plan.title === "Personal Plan" || plan.title === "School Plan"
-              )
-              .map(plan => ({
-                  ...plan,
-                  displayName: plan.title,
-                  dataPlanType: plan.title.toLowerCase().replace(" plan", ""),
-              }));
+      console.log("✅ Reloaded Plans:", plans);
 
-          console.log("✅ Reloaded Plans:", plans);
+      // 3) Fetch Buckets Again (Ensure Buckets Are Updated)
+      const bucketMap = {};
+      const planBuckets = {};
 
-          // 3) Fetch Buckets Again (Ensure Buckets Are Updated)
-          const bucketMap = {};
-          const planBuckets = {};
-
-          for (const plan of plans) {
-              const bucketsRes = await axios.get(
-                  `https://graph.microsoft.com/v1.0/planner/plans/${plan.id}/buckets`,
-                  {
-                      headers: { Authorization: `Bearer ${req.session.accessToken}` },
-                  }
-              );
-
-              let buckets = bucketsRes.data.value || [];
-              const validBuckets = [];
-
-              for (const bucket of buckets) {
-                  const bucketTasksRes = await axios.get(
-                      `https://graph.microsoft.com/v1.0/planner/buckets/${bucket.id}/tasks`,
-                      {
-                          headers: { Authorization: `Bearer ${req.session.accessToken}` },
-                      }
-                  );
-
-                  const bucketTasks = bucketTasksRes.data.value || [];
-
-                  if (bucketTasks.length > 0) {
-                      bucketMap[bucket.id] = { name: bucket.name, planId: bucket.planId };
-                      validBuckets.push(bucket.name);
-                  }
-              }
-
-              planBuckets[plan.dataPlanType] = validBuckets;
+      for (const plan of plans) {
+        const bucketsRes = await axios.get(
+          `https://graph.microsoft.com/v1.0/planner/plans/${plan.id}/buckets`,
+          {
+            headers: { Authorization: `Bearer ${req.session.accessToken}` },
           }
+        );
 
-          console.log("✅ Reloaded Buckets:", planBuckets);
+        let buckets = bucketsRes.data.value || [];
+        const validBuckets = [];
 
-          // 4) Assign Buckets to Tasks
-          tasks.forEach(task => {
-              task.bucketName = bucketMap[task.bucketId] ? bucketMap[task.bucketId].name : "Unknown Bucket";
-              const matchingPlan = plans.find(plan => plan.id === task.planId);
-              task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "unknown";
-          });
+        for (const bucket of buckets) {
+          const bucketTasksRes = await axios.get(
+            `https://graph.microsoft.com/v1.0/planner/buckets/${bucket.id}/tasks`,
+            {
+              headers: { Authorization: `Bearer ${req.session.accessToken}` },
+            }
+          );
 
-          console.log("✅ Reloaded Tasks with Assigned Buckets & Plans:", tasks);
+          const bucketTasks = bucketTasksRes.data.value || [];
 
-          res.render(`partials/${view}`, {
-              tasks: tasks,
-              planBuckets: planBuckets, // Ensure buckets are updated
-          });
+          if (bucketTasks.length > 0) {
+            bucketMap[bucket.id] = { name: bucket.name, planId: bucket.planId };
+            validBuckets.push(bucket.name);
+          }
+        }
 
-      } catch (error) {
-          console.error("❌ Error loading task partial:", error.message);
-          res.status(500).send("Error loading tasks.");
+        planBuckets[plan.dataPlanType] = validBuckets;
       }
+
+      console.log("✅ Reloaded Buckets:", planBuckets);
+
+      // 4) Assign Buckets to Tasks
+      tasks.forEach(task => {
+        task.bucketName = bucketMap[task.bucketId] ? bucketMap[task.bucketId].name : "Unknown Bucket";
+        const matchingPlan = plans.find(plan => plan.id === task.planId);
+        task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "unknown";
+      });
+
+      console.log("✅ Reloaded Tasks with Assigned Buckets & Plans:", tasks);
+
+      res.render(`partials/${view}`, {
+        tasks: tasks,
+        planBuckets: planBuckets, // Ensure buckets are updated
+      });
+
+    } catch (error) {
+      console.error("❌ Error loading task partial:", error.message);
+      res.status(500).send("Error loading tasks.");
+    }
   } else {
-      res.status(404).send("Partial not found.");
+    res.status(404).send("Partial not found.");
   }
 });
 
@@ -170,15 +184,34 @@ app.get("/", async (req, res) => {
     const plansRes = await axios.get("https://graph.microsoft.com/v1.0/me/planner/plans", {
       headers: { Authorization: `Bearer ${req.session.accessToken}` }
     });
-    let rawPlans = plansRes.data.value || [];
+// Define all acceptable school plan titles (original plus additional titles)
+const SCHOOL_PLAN_TITLES = [
+  "School Plan",
+  "School Plan - DIT8210 IT Ldrs as Partners Strat Plng",       // Additional plan 1
+  "School Plan - TS8535 System & App Security Advances",         // Additional plan 2
+  "School Plan - RSCH7864 Quant Design and Analysis"          // Additional plan 3 (if needed)
+];
 
-    let plans = rawPlans.filter(plan =>
-      plan.title === "Work Plan" || plan.title === "Personal Plan" || plan.title === "School Plan"
-    ).map(plan => ({
-      ...plan,
-      displayName: plan.title === "Work Plan" ? "Work Plan" : plan.title === "Personal Plan" ? "Personal Plan" : "School Plan",
-      dataPlanType: plan.title.toLowerCase().replace(" plan", "")
-    }));
+let rawPlans = plansRes.data.value || [];
+
+let plans = rawPlans.filter(plan => {
+  return plan.title === "Work Plan" ||
+         plan.title === "Personal Plan" ||
+         SCHOOL_PLAN_TITLES.includes(plan.title);
+}).map(plan => ({
+  ...plan,
+  displayName: plan.title === "Work Plan"
+    ? "Work Plan"
+    : plan.title === "Personal Plan"
+      ? "Personal Plan"
+      : "School Plan", // Roll up all School plans under a single label
+  dataPlanType: plan.title === "Work Plan"
+    ? "work"
+    : plan.title === "Personal Plan"
+      ? "personal"
+      : "school"
+}));
+
 
     // 3) Fetch Buckets per Plan (Only Buckets That Contain Tasks)
     const bucketMap = {};
@@ -213,16 +246,16 @@ app.get("/", async (req, res) => {
     console.log("✅ Filtered Buckets by Task Count:", planBuckets);
 
 
- // 5) Assign Buckets to Tasks
- tasks.forEach((task) => {
-  task.bucketName = bucketMap[task.bucketId]
-    ? bucketMap[task.bucketId].name
-    : "Unknown Bucket";
-  const matchingPlan = plans.find((plan) => plan.id === task.planId);
-  task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "unknown";
-});
+    // 5) Assign Buckets to Tasks
+    tasks.forEach((task) => {
+      task.bucketName = bucketMap[task.bucketId]
+        ? bucketMap[task.bucketId].name
+        : "Unknown Bucket";
+      const matchingPlan = plans.find((plan) => plan.id === task.planId);
+      task.dataTaskType = matchingPlan ? matchingPlan.dataPlanType : "unknown";
+    });
 
-console.log("✅ Tasks with Assigned Buckets & Plans:", tasks);
+    console.log("✅ Tasks with Assigned Buckets & Plans:", tasks);
 
     // 5) Get Calendars
     const calRes = await axios.get("https://graph.microsoft.com/v1.0/me/calendars", {

@@ -27,11 +27,22 @@
     <% } %>
   </div>
 
-  <!-- Task List (Only Tasks Due Today) -->
-  <% let today = new Date().toISOString().split("T")[0]; %>
-
+  <!-- Task List (Only Tasks Due Today in HST) -->
+  <% 
+    // Get today's date in HST as YYYY-MM-DD
+    const todayHST = new Date().toLocaleDateString("en-CA", { timeZone: "Pacific/Honolulu" });
+  %>
   <ul class="list-unstyled">
-    <% let todayTasks = tasks.filter(task => task.dueDate && task.dueDate.split("T")[0] === today); %>
+    <% 
+      // Filter tasks using dueDateTime and convert to HST date string
+      const todayTasks = tasks.filter(task => {
+        if (task.dueDateTime) {
+          const dueHST = new Date(task.dueDateTime).toLocaleDateString("en-CA", { timeZone: "Pacific/Honolulu" });
+          return dueHST === todayHST;
+        }
+        return false;
+      });
+    %>
 
     <% if (todayTasks.length === 0) { %>
       <p class="no-tasks">No tasks due today.</p>

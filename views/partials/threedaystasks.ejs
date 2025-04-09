@@ -17,20 +17,27 @@
       onclick="filterContent('all', 'bucket', this)">All</button>
 
     <% 
-      let today = new Date().toISOString().split("T")[0]; // Format as YYYY-MM-DD
-      let threeDaysLater = new Date();
-      threeDaysLater.setDate(new Date().getDate() + 3);
-      threeDaysLater = threeDaysLater.toISOString().split("T")[0]; // Format correctly
-
-      // Filter tasks correctly from full task list
-      let nextThreeDaysTasks = tasks.filter(task => 
-          task.dueDate && task.dueDate > today && task.dueDate <= threeDaysLater
-      );
+      // Get today's date in HST as YYYY-MM-DD (using en-CA format)
+      const todayHST = new Date().toLocaleDateString("en-CA", { timeZone: "Pacific/Honolulu" });
+      
+      // Calculate three days later in HST
+      const threeDaysLaterDate = new Date();
+      threeDaysLaterDate.setDate(threeDaysLaterDate.getDate() + 3);
+      const threeDaysLaterHST = threeDaysLaterDate.toLocaleDateString("en-CA", { timeZone: "Pacific/Honolulu" });
+      
+      // Filter tasks: Compare each task's dueDateTime (converted to HST) between today and three days later
+      let nextThreeDaysTasks = tasks.filter(task => {
+          if (task.dueDateTime) {
+              const dueHST = new Date(task.dueDateTime).toLocaleDateString("en-CA", { timeZone: "Pacific/Honolulu" });
+              return dueHST > todayHST && dueHST <= threeDaysLaterHST;
+          }
+          return false;
+      });
 
       let availableBuckets = new Set(nextThreeDaysTasks.map(task => task.bucketName).filter(name => name));
 
-      console.log("✅ Corrected Next 3 Days Tasks (After Full Load):", nextThreeDaysTasks);
-      console.log("✅ Corrected Available Buckets:", Array.from(availableBuckets));
+      console.log("✅ Next 3 Days Tasks (HST):", nextThreeDaysTasks);
+      console.log("✅ Available Buckets:", Array.from(availableBuckets));
     %>
 
     <% if (availableBuckets.size > 0) { %>
@@ -51,12 +58,12 @@
       <p class="no-tasks">No tasks due in the next 3 days.</p>
     <% } else { %>
       <% nextThreeDaysTasks
-          .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)) // Sort by chronological order
+          .sort((a, b) => new Date(a.dueDateTime) - new Date(b.dueDateTime)) // Sort chronologically
           .forEach(task => { %>
         <li class="task-section d-flex align-items-center mb-2" style="gap: 8px;"
           data-task-type="<%= task.dataTaskType %>" data-bucket="<%= task.bucketName %>">
 
-          <!-- Colored bullet associated with task type -->
+          <!-- Colored bullet for task type -->
           <span class="bullet bullet-<%= task.dataTaskType %>"></span>
 
           <i class="bi <%= task.completed
@@ -65,7 +72,8 @@
           %>"></i>
 
           <span>
-            <%= task.title %> - <%= new Date(task.dueDate).toLocaleDateString() %>
+            <%= task.title %> - 
+            <%= new Date(task.dueDateTime).toLocaleDateString("en-CA", { timeZone: "Pacific/Honolulu" }) %>
             <small>(<%= task.bucketName %>)</small>
           </span>
         </li>
